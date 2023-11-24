@@ -10,7 +10,7 @@ Library       JupyterLibrary
 
 
 *** Variables ***
-${ODH_DASHBOARD_PROJECT_NAME}=   Red Hat OpenShift Data Science
+${ODH_DASHBOARD_PROJECT_NAME}=   Red Hat OpenShift AI
 ${ODH_DASHBOARD_SIDEBAR_HEADER_ENABLE_BUTTON}=         //*[@class="pf-c-drawer__panel-main"]//button[.='Enable']
 ${ODH_DASHBOARD_SIDEBAR_HEADER_GET_STARTED_ELEMENT}=   //*[@class="pf-c-drawer__panel-main"]//*[.='Get started']
 ${CARDS_XP}=  //*[(contains(@class, 'odh-card')) and (contains(@class, 'pf-c-card'))]
@@ -652,7 +652,7 @@ Verify Custom Image Description
     [Documentation]    Verifies that the description shown in the dashboard UI
     ...    matches the given one
     [Arguments]    ${image_name}    ${expected_description}
-    ${exists} =  Run Keyword And Return Status  Page Should Contain Element  
+    ${exists} =  Run Keyword And Return Status  Page Should Contain Element
     ...  xpath://td[@data-label="Name"]/div/div/div[.="${image_name} "]/../../../../td[@data-label="Description" and .="${expected_description}"]  # robocop: disable
     IF  ${exists}==False
         ${desc} =  Get Text  xpath://td[@data-label="Name"]/div/div/div[.="${image_name} "]/../../../../td[@data-label="Description"]
@@ -678,7 +678,7 @@ Verify Custom Image Owner
     [Documentation]    Verifies that the user listed for an image in the dahsboard
     ...    UI matches the given one
     [Arguments]    ${image_name}    ${expected_user}
-    ${exists} =  Run Keyword And Return Status  Page Should Contain Element  
+    ${exists} =  Run Keyword And Return Status  Page Should Contain Element
     ...  xpath://td[@data-label="Name"]/div/div/div[.="${image_name} "]/../../../../td[@data-label="User" and .="${expected_user}"]  # robocop: disable
     IF  ${exists}==False
         ${user} =  Get Text  xpath://td[@data-label="Name"]/div/div/div[.="${image_name} "]/../../../../td[@data-label="User"]  # robocop: disable
