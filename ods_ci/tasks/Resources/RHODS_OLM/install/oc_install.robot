@@ -368,7 +368,7 @@ Install Kserve Dependencies
 #          ...    reason=AllCatalogSourcesHealthy    subcription_name=${AUTHORINO_SUB_NAME}
 #    ELSE
 #          Log To Console    message=Authorino Operator is already installed
-    END
+#    END
     ${is_installed}=   Check If Operator Is Installed Via CLI   ${SERVICEMESH_OP_NAME}
     IF    not ${is_installed}
           Install ISV Operator From OperatorHub Via CLI    operator_name=${SERVICEMESH_OP_NAME}
