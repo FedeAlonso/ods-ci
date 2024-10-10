@@ -52,7 +52,7 @@ ${NOTIFICATION_DRAWER_CLOSE_BTN}=  //div[@class="pf-v5-c-drawer__panel"]/div/div
 ${NOTIFICATION_DRAWER_CLOSED}=  //div[@class="pf-v5-c-drawer__panel" and @hidden=""]
 ${GROUPS_CONFIG_CM}=    groups-config
 ${RHODS_GROUPS_CONFIG_CM}=    rhods-groups-config
-${RHODS_LOGO_XPATH}=    //img[@alt="${ODH_DASHBOARD_PROJECT_NAME} miLogo"]
+${RHODS_LOGO_XPATH}=    //img[@alt="${ODH_DASHBOARD_PROJECT_NAME} Logo"]
 ${USER_MENU_TOGGLE}=    //button[@id="user-menu-toggle"]
 ${LOGOUT_BTN}=    //button[.="Log out"]
 @{ISV_TO_REMOVE_SELF_MANAGED}=      Create List     starburst   nvidia    rhoam
