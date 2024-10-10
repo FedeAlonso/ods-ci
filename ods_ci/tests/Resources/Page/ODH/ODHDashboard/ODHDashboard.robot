@@ -52,7 +52,7 @@ ${NOTIFICATION_DRAWER_CLOSE_BTN}=  //div[@class="pf-v5-c-drawer__panel"]/div/div
 ${NOTIFICATION_DRAWER_CLOSED}=  //div[@class="pf-v5-c-drawer__panel" and @hidden=""]
 ${GROUPS_CONFIG_CM}=    groups-config
 ${RHODS_GROUPS_CONFIG_CM}=    rhods-groups-config
-${RHODS_LOGO_XPATH}=    //img[@alt="${ODH_DASHBOARD_PROJECT_NAME} Logo"]
+${RHODS_LOGO_XPATH}=    //img[@alt="${ODH_DASHBOARD_PROJECT_NAME} miLogo"]
 ${USER_MENU_TOGGLE}=    //button[@id="user-menu-toggle"]
 ${LOGOUT_BTN}=    //button[.="Log out"]
 @{ISV_TO_REMOVE_SELF_MANAGED}=      Create List     starburst   nvidia    rhoam
@@ -99,6 +99,7 @@ Wait For RHODS Dashboard To Load
     ...          ${expected_page}=${NONE}    ${timeout}=60
     ${half_timeout}=   Evaluate    int(${timeout}) / 2
     Wait For Condition    return document.title == ${dashboard_title}    timeout=${half_timeout}
+    Capture Page Screenshot
     Wait Until Page Contains Element    xpath:${RHODS_LOGO_XPATH}    timeout=${timeout}
     IF    "${expected_page}" == "${NONE}"
         Wait Until Page Contains Element    //div[@data-testid="home-page"]    timeout=${timeout}
