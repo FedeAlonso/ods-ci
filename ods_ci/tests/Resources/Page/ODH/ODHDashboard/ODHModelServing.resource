@@ -26,6 +26,7 @@ ${KSERVE_MODAL_HEADER}=    //header[@class="pf-v5-c-modal-box__header"]/h1[.="De
 ${KSERVE_RUNTIME_DROPDOWN}=    //button[@data-testid="serving-runtime-template-selection"]
 ${LLM_RESOURCES_DIRPATH}=    tests/Resources/Files/llm
 ${DEPLOY_SINGLE_SV_MODEL_BTN}=    //button[@data-testid="single-serving-select-button"]
+${DEPLOY_SINGLE_MODEL_BTN}=    //button[contains(@data-testid,"deploy-button")]
 ${DEPLOY_MODEL_BTN}=    //button[contains(@data-testid,"deploy-button")]
 ${TOKEN_AUTH_CHECKBOX_XP}=    xpath://input[@id="alt-form-checkbox-auth"]
 ${GRPC_URL_REGEX}=  https:\/\/([^\/:]+)
@@ -143,7 +144,7 @@ Select Existing Data Connection
     [Documentation]    Selects an existing data connection in the "deploy model" modal.
     [Arguments]    ${data_connection_name}    ${retries}=1
 
-     ${is_enabled}=    Run Keyword And Return Status
+    ${is_enabled}=    Run Keyword And Return Status
     ...    Element Should Be Enabled    xpath://button[@id="inference-service-data-connection"]
 
     IF    ${is_enabled}
@@ -152,9 +153,7 @@ Select Existing Data Connection
             Click Element    xpath://li/button[.="${data_connection_name}"]
             ${selected}=    Run Keyword And Return Status
             ...    Page Should Contain Element    //span[.="Name"]/../../..//button[@aria-label="Options menu"][.="${data_connection_name}"]  #robocop: disable
-            IF  ${selected}==${TRUE}
-                BREAK
-            END
+            IF  ${selected}==${TRUE}    BREAK
         END
     ELSE
         Element Should Be Disabled    id:inference-service-data-connection
@@ -230,7 +229,11 @@ Get Model Route Via UI
     # Get the URL
     Sleep    2    reason=The element takes a little bit longer than expected rendering the url
     ${url}=    Get Text    ${route_xpath}
+<<<<<<< HEAD
      ${kserve}=    Run Keyword And Return Status    SeleniumLibrary.Page Should Contain    Single-model serving enabled
+=======
+    ${kserve}=    Run Keyword And Return Status    SeleniumLibrary.Page Should Contain    Single-model serving enabled
+>>>>>>> a3240e7ae9e67ba69ac6600ae3ea373b1e6302e8
     IF    ${kserve}
         ${url}=    Catenate    SEPARATOR=    ${url}    /v2/models/${model_name}/infer
     END
@@ -460,11 +463,19 @@ Deploy Kserve Model Via UI  #robocop: disable
     [Arguments]    ${model_name}    ${serving_runtime}    ${data_connection}    ${path}
     ...    ${model_framework}=caikit    ${replicas}=1    ${size}=Small    ${no_gpus}=${0}
     ...    ${token}=${FALSE}    ${multi_token}=${FALSE}    ${multi_service_account_name}=default-name2
-    ...    ${public_endpoint}=${TRUE}    ${service_account_name}=${NONE}
+    ...    ${public_endpoint}=${TRUE}    ${service_account_name}=${NONE}    ${existing_server}=${FALSE}
     Move To Tab    Models
+<<<<<<< HEAD
     SeleniumLibrary.Click Button    ${DEPLOY_SINGLE_SV_MODEL_BTN}
     SeleniumLibrary.Wait Until Page Contains Element    ${DEPLOY_MODEL_BTN}
     SeleniumLibrary.Click Button    ${DEPLOY_MODEL_BTN}
+=======
+    IF    ${existing_server} == False
+        SeleniumLibrary.Click Button    ${DEPLOY_SINGLE_SV_MODEL_BTN}
+    END
+    SeleniumLibrary.Wait Until Page Contains Element    ${DEPLOY_SINGLE_MODEL_BTN}
+    SeleniumLibrary.Click Button    ${DEPLOY_SINGLE_MODEL_BTN}
+>>>>>>> a3240e7ae9e67ba69ac6600ae3ea373b1e6302e8
     SeleniumLibrary.Wait Until Page Contains Element    xpath=${KSERVE_MODAL_HEADER}
     Set Model Name   ${model_name}
     Set Model Server Runtime    ${serving_runtime}
@@ -510,7 +521,7 @@ Set Model Server Runtime
     [Arguments]    ${runtime}=Caikit TGIS
     Page Should Contain Element    ${KSERVE_RUNTIME_DROPDOWN}
     Click Element    ${KSERVE_RUNTIME_DROPDOWN}
-    Click Element    ${KSERVE_RUNTIME_DROPDOWN}/..//*[@data-testid="kserve-ovms"]
+    Click Element    ${KSERVE_RUNTIME_DROPDOWN}/..//span[contains(text(),"${runtime}")]
 
 Get Kserve Inference Host Via UI
     [Documentation]    Fetches the host of the model's URL from the Data Science Project UI
