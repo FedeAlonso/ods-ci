@@ -27,7 +27,10 @@ ${KSERVE_MODAL_HEADER}=    //header[@class="pf-v5-c-modal-box__header"]/h1[.="De
 ${KSERVE_RUNTIME_DROPDOWN}=    //button[@data-testid="serving-runtime-template-selection"]
 ${LLM_RESOURCES_DIRPATH}=    tests/Resources/Files/llm
 ${DEPLOY_SINGLE_SV_MODEL_BTN}=    //button[@data-testid="single-serving-select-button"]
+<<<<<<< HEAD
 ${DEPLOY_SINGLE_MODEL_BTN}=    //button[contains(@data-testid,"deploy-button")]
+=======
+>>>>>>> 3f5328366c6a4f596f2fd5ff931c11c051db719d
 ${DEPLOY_MODEL_BTN}=    //button[contains(@data-testid,"deploy-button")]
 ${TOKEN_AUTH_CHECKBOX_XP}=    xpath://input[@id="alt-form-checkbox-auth"]
 ${GRPC_URL_REGEX}=  https:\/\/([^\/:]+)
@@ -159,13 +162,32 @@ Select Existing Data Connection
     [Documentation]    Selects an existing data connection in the "deploy model" modal.
     [Arguments]    ${data_connection_name}    ${retries}=1
 
+<<<<<<< HEAD
     FOR  ${retry_idx}  IN RANGE  0  1+${retries}
         Click Element    xpath://button[@class="pf-v5-c-menu-toggle__button"]
         Click Element    xpath://button[@class="pf-v5-c-menu__item"]/span/span[contains(., "${data_connection_name}")]
         ${selected}=    Get Element Attribute    //span[@class="pf-v5-c-text-input-group__text"]/input    value
         IF  "${selected}"=="${data_connection_name}"
             BREAK
+=======
+     ${is_enabled}=    Run Keyword And Return Status
+    ...    Element Should Be Enabled    xpath://button[@id="inference-service-data-connection"]
+
+    IF    ${is_enabled}
+        FOR  ${retry_idx}  IN RANGE  0  1+${retries}
+            Open Name Options Menu
+            Click Element    xpath://li/button[.="${data_connection_name}"]
+            ${selected}=    Run Keyword And Return Status
+            ...    Page Should Contain Element    //span[.="Name"]/../../..//button[@aria-label="Options menu"][.="${data_connection_name}"]  #robocop: disable
+            IF  ${selected}==${TRUE}
+                BREAK
+            END
+>>>>>>> 3f5328366c6a4f596f2fd5ff931c11c051db719d
         END
+    ELSE
+        Element Should Be Disabled    id:inference-service-data-connection
+        ${text}=    Get Text    xpath://button[@id="inference-service-data-connection"]/span/div/div
+        Should Be Equal    ${text}    ${data_connection_name}
     END
 
 Set Folder Path
@@ -226,7 +248,11 @@ Get Model Route Via UI
     [Arguments]    ${model_name}
     # TODO: Open model serving home page if needed?
     # Click on Inference Endpoints link
+<<<<<<< HEAD
     ${endpoint_link}=    Set Variable    //a[@data-testid="metrics-link-${model_name}" and text()="${model_name}"]/ancestor::tr//td//button[@data-testid="internal-external-service-button"]
+=======
+    ${endpoint_link}=    Set Variable    //a[@data-testid="metrics-link-test-model" and text()="${model_name}"]/ancestor::tr//td//button[@data-testid="internal-external-service-button"]
+>>>>>>> 3f5328366c6a4f596f2fd5ff931c11c051db719d
     SeleniumLibrary.Wait Until Page Contains Element    ${endpoint_link}
     SeleniumLibrary.Click Button    ${endpoint_link}
     # Get the external URL
@@ -236,7 +262,11 @@ Get Model Route Via UI
     # Get the URL
     Sleep    2    reason=The element takes a little bit longer than expected rendering the url
     ${url}=    Get Text    ${route_xpath}
+<<<<<<< HEAD
     ${kserve}=    Run Keyword And Return Status    SeleniumLibrary.Page Should Contain    Single-model serving enabled
+=======
+     ${kserve}=    Run Keyword And Return Status    SeleniumLibrary.Page Should Contain    Single-model serving enabled
+>>>>>>> 3f5328366c6a4f596f2fd5ff931c11c051db719d
     IF    ${kserve}
         ${url}=    Catenate    SEPARATOR=    ${url}    /v2/models/${model_name}/infer
     END
@@ -473,11 +503,17 @@ Deploy Kserve Model Via UI  #robocop: disable
     ...    ${token}=${FALSE}    ${multi_token}=${FALSE}    ${multi_service_account_name}=default-name2
     ...    ${public_endpoint}=${TRUE}    ${service_account_name}=${NONE}    ${existing_server}=${FALSE}
     Move To Tab    Models
+<<<<<<< HEAD
     IF    ${existing_server} == False
         SeleniumLibrary.Click Button    ${DEPLOY_SINGLE_SV_MODEL_BTN}
     END
     SeleniumLibrary.Wait Until Page Contains Element    ${DEPLOY_SINGLE_MODEL_BTN}
     SeleniumLibrary.Click Button    ${DEPLOY_SINGLE_MODEL_BTN}
+=======
+    SeleniumLibrary.Click Button    ${DEPLOY_SINGLE_SV_MODEL_BTN}
+    SeleniumLibrary.Wait Until Page Contains Element    ${DEPLOY_MODEL_BTN}
+    SeleniumLibrary.Click Button    ${DEPLOY_MODEL_BTN}
+>>>>>>> 3f5328366c6a4f596f2fd5ff931c11c051db719d
     SeleniumLibrary.Wait Until Page Contains Element    xpath=${KSERVE_MODAL_HEADER}
     Set Model Name   ${model_name}
     Set Model Server Runtime    ${serving_runtime}
