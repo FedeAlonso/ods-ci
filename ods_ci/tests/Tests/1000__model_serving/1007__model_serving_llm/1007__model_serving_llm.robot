@@ -51,13 +51,13 @@ ${CAIKIT_TGIS_RUNTIME_NAME}=    caikit-tgis-runtime
 Verify External Dependency Operators Can Be Deployed
     [Documentation]    Checks the pre-required Operators can be installed
     ...                and configured
-    [Tags]    ODS-2326
+    [Tags]    ODS-2326   Kserve-caikit
     Pass Execution    message=Installation done as part of Suite Setup.
 
 Verify User Can Serve And Query A Model    # robocop: off=too-long-test-case
     [Documentation]    Basic tests for preparing, deploying and querying a LLM model
     ...                using Kserve and Caikit+TGIS runtime
-    [Tags]    Sanity    ODS-2341
+    [Tags]    Sanity    ODS-2341   Kserve-caikit
     [Setup]    Set Project And Runtime    namespace=${TEST_NS}-cli
     ${test_namespace}=    Set Variable     ${TEST_NS}-cli
     ${flan_model_name}=    Set Variable    flan-t5-small-caikit
@@ -339,7 +339,7 @@ Verify User Can Set Requests And Limits For A Model    # robocop: off=too-long-t
 Verify Model Can Be Served And Query On A GPU Node    # robocop: off=too-long-test-case,too-many-calls-in-test-case
     [Documentation]    Basic tests for preparing, deploying and querying a LLM model on GPU node
     ...                using Kserve and Caikit+TGIS runtime
-    [Tags]    Sanity    ODS-2381    Resources-GPU    NVIDIA-GPUs
+    [Tags]    Sanity    ODS-2381    Resources-GPU    NVIDIA-GPUs   Kserve-caikit
     [Setup]    Set Project And Runtime    namespace=singlemodel-gpu
     ${test_namespace}=    Set Variable    singlemodel-gpu
     ${model_name}=    Set Variable    flan-t5-small-caikit

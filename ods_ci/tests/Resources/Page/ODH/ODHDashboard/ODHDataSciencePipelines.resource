@@ -11,7 +11,7 @@ Resource            ODHDataScienceProject/Pipelines.resource
 
 
 *** Variables ***
-${PIPELINES_IMPORT_BTN_FORM_XP}=                 xpath://*[@data-testid="import-button"]
+${PIPELINES_IMPORT_BTN_FORM_XP}=                 xpath://*[@data-testid="modal-submit-button"]
 ${PIPELINE_NAME_INPUT_XP}=                       xpath://*[@data-testid="pipeline-name"]
 ${PIPELINE_DESC_INPUT_XP}=                       xpath://*[@data-testid="pipeline-description"]
 ${PIPELINE_RUN_NAME_INPUT_XP}=                   id:run-name
@@ -112,14 +112,14 @@ Delete Pipeline
     ...    available and deletes the pipeline using the pipelines actions menu.
     ...    TODO: improve keyword to delete multiple pipeline versions
     [Arguments]    ${pipeline_name}
-    Navigate To Page    Data Science Pipelines
+    Navigate To Page    Data Science Pipelines    Pipelines
     ODHDashboard.Maybe Wait For Dashboard Loading Spinner Page
 
     Pipelines.Expand Pipeline Details    ${pipeline_name}
     Pipelines.Click Action From Pipeline Version Actions Menu    ${pipeline_name}    Delete pipeline version
     Handle Deletion Confirmation Modal    ${pipeline_name}    pipeline
-
-    Pipelines.Click Action From Pipeline Actions Menu    ${pipeline_name}    Delete
+    SeleniumLibrary.Reload Page
+    Pipelines.Click Action From Pipeline Actions Menu    ${pipeline_name}    Delete pipeline
     Handle Deletion Confirmation Modal    ${pipeline_name}    pipeline
     Wait Until Pipeline Is Not Listed    ${pipeline_name}
 
@@ -174,12 +174,12 @@ Open Pipeline Run
     [Arguments]    ${pipeline_run_name}    ${experiment_name}=Default
     Navigate To Page    Experiments    Experiments and runs
     ODHDashboard.Maybe Wait For Dashboard Loading Spinner Page    timeout=30s
-    Click Element    ${PIPELINE_EXPERIMENT_TABLE_XP}//*[contains(text(), "${experiment_name}")]
+    Click Element    ${PIPELINE_EXPERIMENT_TABLE_XP}//*[@data-testid="table-row-title"]//*[text()="${experiment_name}"]
     ODHDashboard.Maybe Wait For Dashboard Loading Spinner Page     timeout=30s
     Wait Until Page Contains Element    xpath=//*[@data-testid="active-runs-tab"]      timeout=30s
     Click Element    xpath=//*[@data-testid="active-runs-tab"]
     Wait Until Page Contains Element    xpath=//span[text()='${pipeline_run_name}']
-    Click Element    xpath=//span[text()='${pipeline_run_name}']
+    Click Element    xpath=//td[@data-label="Name"]//span[contains(text(), '${pipeline_run_name}')]
     Wait Until Page Contains Element    xpath=//div[@data-test-id='topology']
 
 # robocop: disable:line-too-long
@@ -192,7 +192,7 @@ Get Pipeline Run Step Log
     # the logs are full loaded when "The log window displays partial content" the message appeared
     Wait Until Page Contains Element    xpath=//h2[text()='The log window displays partial content']
     Capture Page Screenshot
-    ${log_with_tags}=    Get Element Attribute    xpath://div[@class="pf-v5-c-log-viewer__list"]    innerHTML
+    ${log_with_tags}=    Get Element Attribute    xpath://div[@class="pf-v6-c-log-viewer__list"]    innerHTML
     Log    ${log_with_tags}
     # we close the modal otherwise any othe step in the test case will need to close it
     Click Element    xpath=//button[@aria-label="Close drawer panel"]
@@ -202,7 +202,7 @@ Verify Pipeline Run Is Completed
     [Documentation]    Open the Pipeline detail and wait for the Completed Status
     [Arguments]    ${pipeline_run_name}    ${timeout}=10m   ${experiment_name}=Default
     Open Pipeline Run    ${pipeline_run_name}    ${experiment_name}
-    Wait Until Page Contains Element    //span[@class='pf-v5-c-label__text' and text()='Succeeded']    timeout=${timeout}
+    Wait Until Page Contains Element    //span[@class='pf-v6-c-label__text' and text()='Succeeded']    timeout=${timeout}
     Capture Page Screenshot
 
 # robocop: disable:line-too-long

@@ -7,7 +7,6 @@ Resource         ../../Common.robot
 
 *** Variables ***
 ${PROJECT_XP}=    xpath=//div[text()='Project']
-${DISTRIBUITED_WORKLOAD_METRICS_TITLE_XP}=    xpath=//h1[text()="Distributed Workload Metrics"]
 ${DISTRIBUITED_WORKLOAD_METRICS_TEXT_XP}=    xpath=//div[text()='Monitor the metrics of your active resources.']
 ${PROJECT_METRICS_TAB_XP}=    xpath=//button[@aria-label="Project metrics tab"]
 ${WORKLOAD_STATUS_TAB_XP}=    xpath=//button[@aria-label="Distributed workload status tab"]
@@ -28,7 +27,8 @@ ${RAY_CR_FILE}=    tests/Resources/Page/DistributedWorkloads/ray_cluster_cr.yaml
 ${CPU_SHARED_QUOTA}=    9
 ${MEMEORY_SHARED_QUOTA}=    36
 ${tolerance}=    1
-
+${CPU_WARNING_XP}=    //*[@id="requested-resources-chart-CPU-ChartLegend-ChartLabel-3"]
+${MEMORY_WARNING_XP}=    //*[@id="requested-resources-chart-Memory-ChartLegend-ChartLabel-3"]
 
 *** Keywords ***
 Open Distributed Workload Metrics Home Page
@@ -162,8 +162,8 @@ Get Memory Requested
 
 Get Requested Resources Tooltip Text
     [Documentation]    retuns tooltip text of requested resources chart
-    Wait Until Element Is Visible    xpath://*[contains(@style, 'fill: var(--pf-v5-chart-tooltip--Fill')]
-    ${tooltip_text} =  Get Text    xpath://*[contains(@style, 'fill: var(--pf-v5-chart-tooltip--Fill')]
+    Wait Until Element Is Visible    xpath://*[contains(@style, 'fill: var(--pf-v6-chart-tooltip--Fill')]
+    ${tooltip_text} =  Get Text    xpath://*[contains(@style, 'fill: var(--pf-v6-chart-tooltip--Fill')]
     RETURN    ${tooltip_text}
 
 Get Memory Requested Tooltip Text
@@ -208,6 +208,7 @@ Cleanup Ray Cluster Workload
 Check Project Metrics Default Page Contents
     [Documentation]    checks Project Metrics Default Page contents exists
     [Arguments]    ${project_name}
+    Click Button    ${PROJECT_METRICS_TAB_XP}
     Wait Until Element Is Visible    ${DISTRIBUITED_WORKLOAD_RESOURCE_METRICS_TITLE_XP}    timeout=20
     Page Should Contain Element    ${PROJECT_METRICS_TAB_XP}
     Page Should Contain Element    ${REFRESH_INTERVAL_XP}
@@ -220,7 +221,6 @@ Check Project Metrics Default Page Contents
 
 Check Distributed Workload Status Page Contents
     [Documentation]    checks Distributed Workload status Default Page contents exists
-    Click Button    ${WORKLOAD_STATUS_TAB_XP}
     Wait Until Element Is Visible  ${WORKLOADS_STATUS_XP}    timeout=20
     Page Should Contain Element    ${REFRESH_INTERVAL_XP}
     Page Should Contain Element    ${STATUS_OVERVIEW_XP}
@@ -265,7 +265,7 @@ Check Distributed Workload Resource Metrics Status
     [Documentation]    checks Distributed Workload Resource Metrics Status contents
     [Arguments]    ${job_name}    ${job_status}
     Check Expected String Contains    //td[@data-label="Name"]    ${job_name}
-    Check Expected String Equals    //td[@data-label="Status"]//span[@class="pf-v5-c-label__text"]    ${job_status}
+    Check Expected String Equals    //td[@data-label="Status"]//span[@class="pf-v6-c-label__text"]    ${job_status}
 
 Compare Workload Created Date With Current Date
     [Documentation]    Check Workload Created Date To Be Less Than Equal To Current Date
@@ -309,10 +309,10 @@ Check Distributed Workload Resource Metrics Chart
     ${cpu_usage_hover_value}     ${cpu_requested_hover_value} =  Get CPU Requested Tooltip Text
     Check Resource Consuming Usage    ${cpu_usage}    ${cpu_usage_hover_value}    CPU
     Should Be True     ${cpu_requested_hover_value} == ${cpu_requested}
-    ${cpu_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v5-chart-donut--label--title--Fill')]])[1]
+    ${cpu_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v6-chart-donut--label--title--Fill')]])[1]
     Check Resource Consuming Usage    ${cpu_usage}    ${cpu_consuming}    CPU
 
-    Mouse Over    (//button[@class="pf-v5-c-table__button"])[1]
+    Mouse Over    (//button[@class="pf-v6-c-table__button"])[1]
 
     Wait Until Element Is Visible    xpath=//*[@id="topResourceConsumingMemory-ChartLabel-title"]    timeout=120
     Wait Until Element Is Visible    xpath=//*[@id="topResourceConsumingMemory-ChartLegend-ChartLabel-0"]    timeout=120
@@ -322,7 +322,7 @@ Check Distributed Workload Resource Metrics Chart
     ${memory_usage_hover_value}     ${memory_requested_hover_value} =  Get Memory Requested Tooltip Text
     Check Resource Consuming Usage    ${memory_usage}    ${memory_usage_hover_value}    Memory
     Should Be True     ${memory_requested_hover_value} == ${memory_requested}
-    ${memory_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v5-chart-donut--label--title--Fill')]])[2]
+    ${memory_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v6-chart-donut--label--title--Fill')]])[2]
     Check Resource Consuming Usage    ${memory_usage}    ${memory_consuming}    Memory
 
 Check Distributed Worklaod Status Overview
@@ -338,7 +338,7 @@ Check Distributed Worklaod Status Overview
     ${get_created_datetime} =    Get Text    xpath=//td[@data-label="Created"]
     ${get_created_date} =    Evaluate    re.search(r'[^,]+','''${get_created_datetime}''').group(0)
     Compare Workload Created Date With Current Date    ${get_created_date}    ${get_current_date}
-    Check Expected String Equals    //td[@data-label="Status"]//span[@class="pf-v5-c-label__text"]    ${job_status}
+    Check Expected String Equals    //td[@data-label="Status"]//span[@class="pf-v6-c-label__text"]    ${job_status}
     Check Expected String Equals    //td[@data-label="Latest Message"]    ${job_status_message}
 
 Check Resource Consuming Usage
@@ -354,8 +354,8 @@ Check Resource Consuming Usage
 
 Submit Kueue Workload
     [Documentation]    method for creating kueue workload
-    [Arguments]    ${local_queue}   ${project}    ${cpu_requested}    ${memory_requested}    ${job_name_queue}
-    ${result}=    Run Process    sh ${KUEUE_WORKLOADS_SETUP_FILEPATH} ${local_queue} ${project} ${cpu_requested} ${memory_requested} ${job_name_queue}
+    [Arguments]    ${local_queue}   ${project}    ${cpu_requested}    ${memory_requested}    ${job_name_queue}    ${add_annotation}=${False}    ${parallelism}=None
+    ${result}=    Run Process    sh ${KUEUE_WORKLOADS_SETUP_FILEPATH} ${local_queue} ${project} ${cpu_requested} ${memory_requested} ${job_name_queue} ${add_annotation} ${parallelism}
     ...    shell=true
     ...    stderr=STDOUT
     Log To Console    ${result.stdout}
@@ -366,5 +366,16 @@ Submit Kueue Workload
 Wait For Job With Status
     [Documentation]    Wait for job status with job name
     [Arguments]    ${job_name}    ${job_status}    ${timeout}
-    Wait Until Element Is Visible    //td[@class='pf-v5-c-table__td' and contains(text(), '${job_name}')]/following-sibling::td[@data-label='Status']/span/span/span[@class='pf-v5-c-label__text'and text()='${job_status}']    timeout=${timeout}
+    Wait Until Element Is Visible    //td[@class='pf-v6-c-table__td' and contains(text(), '${job_name}')]/following-sibling::td[@data-label='Status']/span/span/span[@class='pf-v6-c-label__text'and text()='${job_status}']    timeout=${timeout}
 
+Check Warning Threshold Chart
+    [Documentation]    verifies warning threshold of cpu and memory resources
+    Mouse Over    xpath=(//*[name()='svg']//*[local-name()='g']//*[local-name()='path'])[4]
+    ${hover_cpu_warning} =  Get Requested Resources Tooltip Text
+    Should Match   ${hover_cpu_warning}   Requested resources have surpassed 150%
+    Mouse Over    xpath=//*[@id="requested-resources-chart-CPU-ChartLegend-ChartLabel-0"]
+
+    Mouse Over    xpath=(//*[name()='svg']//*[local-name()='g']//*[local-name()='path'])[12]
+    ${hover_memory_warning} =  Get Requested Resources Tooltip Text
+    Should Match   ${hover_memory_warning}   Requested resources have surpassed 150%
+    Mouse Over    xpath=//*[@id="requested-resources-chart-Memory-ChartLegend-ChartLabel-0"]

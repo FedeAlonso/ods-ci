@@ -9,7 +9,6 @@ Resource          ../../../Resources/Page/DistributedWorkloads/DistributedWorklo
 
 *** Variables ***
 ${KUBERAY_RELEASE_ASSETS}     %{KUBERAY_RELEASE_ASSETS=https://github.com/opendatahub-io/kuberay/releases/latest/download}
-${KUBERAY_TEST_RAY_IMAGE}     quay.io/modh/ray@sha256:db667df1bc437a7b0965e8031e905d3ab04b86390d764d120e05ea5a5c18d1b4
 
 *** Test Cases ***
 Run TestRayJob test
@@ -59,6 +58,10 @@ Prepare Kuberay E2E Test Suite
     END
     Create Directory    %{WORKSPACE}/kuberay-logs
     RHOSi Setup
+    # This is a temporary workaround to avoid ValidatingAdmissionPolicy check
+    Disable Component    kueue
+    # ValidatingAdmissionPolicy is supported just on newer OCP, using Sleep as a workaround to make sure that ValidatingAdmissionPolicy is removed if it exists
+    Sleep  3s
 
 Teardown Kuberay E2E Test Suite
     Log To Console    "Removing test binaries"
@@ -70,6 +73,8 @@ Teardown Kuberay E2E Test Suite
         FAIL    Unable to remove compiled binaries
     END
     RHOSi Teardown
+    Enable Component    kueue
+    Wait Component Ready    kueue
 
 Run Kuberay E2E Test
     [Documentation]    Run Kuberay E2E Test
@@ -77,9 +82,9 @@ Run Kuberay E2E Test
     Log To Console    Running Kuberay E2E test: ${test_name}
     ${result} =    Run Process    ./e2e -test.timeout 30m -test.parallel 1 -test.run ${test_name}
     ...    env:KUBERAY_TEST_TIMEOUT_SHORT=2m
-    ...    env:KUBERAY_TEST_TIMEOUT_MEDIUM=7m
-    ...    env:KUBERAY_TEST_TIMEOUT_LONG=10m
-    ...    env:KUBERAY_TEST_RAY_IMAGE=${KUBERAY_TEST_RAY_IMAGE}
+    ...    env:KUBERAY_TEST_TIMEOUT_MEDIUM=10m
+    ...    env:KUBERAY_TEST_TIMEOUT_LONG=12m
+    ...    env:KUBERAY_TEST_RAY_IMAGE=${RAY_CUDA_IMAGE_3.11}
     ...    env:KUBERAY_TEST_OUTPUT_DIR=%{WORKSPACE}/kuberay-logs
     ...    shell=true
     ...    stderr=STDOUT

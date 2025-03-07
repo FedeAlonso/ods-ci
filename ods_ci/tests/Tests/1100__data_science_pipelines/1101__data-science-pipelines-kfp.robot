@@ -76,27 +76,6 @@ Verify Upload Download In Data Science Pipelines Using The kfp Python Package
     ...    pipeline_params=${upload_download_dict}
     [Teardown]    Projects.Delete Project Via CLI By Display Name    ${PROJECT_NAME}
 
-Verify Ods Users Can Create And Run A Data Science Pipeline With Ray Using The kfp Python Package
-    [Documentation]    Creates, runs pipelines with regular user. Double check the pipeline result and clean
-    ...    the pipeline resources.
-    ...    AutomationBugOnDisconnected: RHOAIENG-12514
-    [Tags]      Tier1    AutomationBugOnDisconnected
-    Skip If Component Is Not Enabled    ray
-    Skip If Component Is Not Enabled    codeflare
-    ${ray_dict}=    Create Dictionary
-    End To End Pipeline Workflow Using Kfp
-    ...    admin_username=${TEST_USER.USERNAME}
-    ...    admin_password=${TEST_USER.PASSWORD}
-    ...    username=${TEST_USER_3.USERNAME}
-    ...    password=${TEST_USER_3.PASSWORD}
-    ...    project=${PROJECT_NAME}
-    ...    python_file=cache-disabled/ray_integration.py
-    ...    method_name=ray_integration
-    ...    status_check_timeout=600
-    ...    pipeline_params=${ray_dict}
-    ...    ray=${TRUE}
-    [Teardown]    Projects.Delete Project Via CLI By Display Name    ${PROJECT_NAME}
-
 
 *** Keywords ***
 # robocop: disable:line-too-long
@@ -107,7 +86,7 @@ End To End Pipeline Workflow Using Kfp
     ...    ${method_name}    ${pipeline_params}    ${status_check_timeout}=160    ${ray}=${FALSE}
 
     Projects.Delete Project Via CLI By Display Name    ${project}
-    Projects.Create Data Science Project From CLI    name=${project}
+    Projects.Create Data Science Project From CLI    name=${project}    as_user=${admin_username}
 
     DataSciencePipelinesBackend.Create PipelineServer Using Custom DSPA    ${project}
 

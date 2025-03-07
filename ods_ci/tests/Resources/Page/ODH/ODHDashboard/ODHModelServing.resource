@@ -20,10 +20,10 @@ ${S3_REGION_DC_INPUT_XP}=          xpath=//input[@aria-label="Field list AWS_DEF
 ${S3_BUCKET_DC_INPUT_XP}=     xpath=//input[@aria-label="Field list AWS_S3_BUCKET"]
 ${S3_DEFAULT_BUCKET}=    ods-ci-s3
 ${MS_TABLE_PROJECT}=    /../../td[@data-label="Project"]
-${MS_TABLE_ENDPOINT_INPUT}=    /ancestor::tr//td[@data-label="Inference endpoint"]//button[@id='copy-button-4']
+${MS_TABLE_ENDPOINT_INPUT}=    /ancestor::tr//td[@data-label="Inference endpoint"]//input[contains(@id,"text-input-")]
 ${MS_TABLE_STATUS_SUCCESS}=     /ancestor::tr//td[@data-label="Status"]//span[contains(@class,"pf-m-success")]
 ${MS_TABLE_STATUS_FAILURE}=     /ancestor::tr//td[@data-label="Status"]//span[contains(@class,"pf-m-danger")]
-${KSERVE_MODAL_HEADER}=    //header[@class="pf-v5-c-modal-box__header"]/h1[.="Deploy model"]
+${KSERVE_MODAL_HEADER}=    //header[@class="pf-v6-c-modal-box__header"]/h1[.="Deploy model"]
 ${KSERVE_RUNTIME_DROPDOWN}=    //button[@data-testid="serving-runtime-template-selection"]
 ${LLM_RESOURCES_DIRPATH}=    tests/Resources/Files/llm
 ${DEPLOY_SINGLE_SV_MODEL_BTN}=    //button[@data-testid="single-serving-select-button"]
@@ -164,9 +164,9 @@ Select Existing Data Connection
 
 <<<<<<< HEAD
     FOR  ${retry_idx}  IN RANGE  0  1+${retries}
-        Click Element    xpath://button[@class="pf-v5-c-menu-toggle__button"]
-        Click Element    xpath://button[@class="pf-v5-c-menu__item"]/span/span[contains(., "${data_connection_name}")]
-        ${selected}=    Get Element Attribute    //span[@class="pf-v5-c-text-input-group__text"]/input    value
+        Click Element    xpath://button[@class="pf-v6-c-menu-toggle__button"]
+        Click Element    xpath://button[@class="pf-v6-c-menu__item"]/span/span[contains(., "${data_connection_name}")]
+        ${selected}=    Get Element Attribute    //span[@class="pf-v6-c-text-input-group__text"]/input    value
         IF  "${selected}"=="${data_connection_name}"
             BREAK
 =======
@@ -322,7 +322,7 @@ Get Model Inference
     ...    set to ${TRUE}.
     [Arguments]    ${model_name}    ${inference_input}    ${token_auth}=${FALSE}   ${project_title}=${NONE}
     ...    ${kserve_mode}=Serverless   ${deployment_mode}=UI   ${service_port}=8888   ${end_point}=${NONE}
-    ...    ${service_account_name}=default-name   ${token}=${NONE}
+    ...    ${service_account_name}=default-name   ${token}=${NONE}      ${set_json_content_type}=${FALSE}
     ${curl_cmd}=     Set Variable    ${NONE}
     ${self_managed}=    Is RHODS Self-Managed
     IF    $deployment_mode == 'UI'
@@ -330,6 +330,10 @@ Get Model Inference
         ${kserve}=    Run Keyword And Return Status    SeleniumLibrary.Page Should Contain
         ...    Single-model serving enabled
         ${curl_cmd}=     Set Variable    curl -s ${url} -d ${inference_input}
+        IF    ${set_json_content_type}
+            ${curl_cmd}=     Catenate    ${curl_cmd}    -H 'Content-Type: application/json'
+        END
+        Log     ${curl_cmd}
         IF    ${token_auth}
             IF    "${project_title}" == "${NONE}"
                 ${project_title}=    Get Model Project    ${model_name}
@@ -340,12 +344,15 @@ Get Model Inference
             END
             ${curl_cmd}=     Catenate    ${curl_cmd}    -H "Authorization: Bearer ${token}"
         END
+        Log     ${curl_cmd}
         IF  ${kserve}
             Fetch Knative CA Certificate    filename=openshift_ca_istio_knative.crt
             ${curl_cmd}=     Catenate    ${curl_cmd}    --cacert openshift_ca_istio_knative.crt
+            Log     ${curl_cmd}
         ELSE IF  ${self_managed}
             Fetch Openshift CA Bundle
             ${curl_cmd}=     Catenate    ${curl_cmd}    --cacert openshift_ca.crt
+            Log     ${curl_cmd}
         END
     ELSE IF    $deployment_mode == 'Cli'
         ${rc}   ${cmd_op}=  Run And Return Rc And Output
@@ -362,7 +369,7 @@ Get Model Inference
             ${rc}    ${url}=    Run And Return Rc And Output
             ...    oc get ksvc ${model_name}-predictor -n ${project_title} -o jsonpath='{.status.url}'
             Should Be Equal As Integers    ${rc}    0
-            ${curl_cmd}=    Set Variable    curl -s ${url}${end_point} -d ${inference_input}
+            ${curl_cmd}=    Set Variable    curl -s ${url}${end_point} -d ${inference_input} --cacert openshift_ca_istio_knative.crt
         ELSE IF    '${kserve_mode}' == 'RawDeployment'
             ${url}=   Set Variable    http://localhost:${service_port}${end_point}
             ${curl_cmd}=    Set Variable    curl -s ${url} -d ${inference_input} --cacert openshift_ca_istio_knative.crt
@@ -385,7 +392,7 @@ Verify Model Inference
     [Documentation]    Verifies that the inference result of a model is equal to an expected output
     [Arguments]    ${model_name}    ${inference_input}    ${expected_inference_output}    ${token_auth}=${FALSE}
     ...    ${project_title}=${NONE}    ${deployment_mode}=UI    ${kserve_mode}=Serverless
-    ...    ${service_port}=${NONE}   ${end_point}=${NONE}    ${token}=${NONE}
+    ...    ${service_port}=${NONE}   ${end_point}=${NONE}    ${token}=${NONE}      ${set_json_content_type}=${FALSE}
     IF   $deployment_mode == 'UI'
          Open Model Serving Home Page
          Switch Model Serving Project    ${project_title}
@@ -393,7 +400,7 @@ Verify Model Inference
     ${inference_output}=    Get Model Inference    model_name=${model_name}   inference_input=${inference_input}
     ...    token_auth=${token_auth}    kserve_mode=${kserve_mode}    project_title=${project_title}
     ...    deployment_mode=${deployment_mode}    service_port=${service_port}    end_point=${end_point}
-    ...    token=${token}      # robocop: disable
+    ...    token=${token}      set_json_content_type=${set_json_content_type}           # robocop: disable
     Log    ${inference_output}
     ${result}    ${list}=    Inference Comparison    ${expected_inference_output}    ${inference_output}
     Log    ${result}
@@ -415,9 +422,10 @@ Verify Model Inference With Retries
     ...                This is a temporary mitigation meanwhile we find a better way to check the model
     [Arguments]    ${model_name}    ${inference_input}    ${expected_inference_output}    ${token_auth}=${FALSE}
     ...            ${project_title}=${NONE}    ${retries}=${5}     ${deployment_mode}=UI    ${kserve_mode}=Serverless
-    ...            ${service_port}=${NONE}   ${end_point}=${NONE}
+    ...            ${service_port}=${NONE}   ${end_point}=${NONE}   ${set_json_content_type}=${FALSE}
     ${status}=    Run Keyword And Return Status    Verify Model Inference    ${model_name}    ${inference_input}
     ...    ${expected_inference_output}    ${token_auth}    ${project_title}    ${deployment_mode}
+    ...    set_json_content_type=${set_json_content_type}
     IF    not ${status}
         ${retry}=    Set Variable    ${0}
         WHILE    ${retry} < ${retries}
@@ -428,7 +436,7 @@ Verify Model Inference With Retries
             ${status}=    Run Keyword And Return Status    Verify Model Inference
             ...    ${model_name}    ${inference_input}    ${expected_inference_output}    ${token_auth}
             ...    project_title=${project_title}     deployment_mode=${deployment_mode}  kserve_mode=${kserve_mode}
-            ...    service_port=${service_port}   end_point=${end_point}
+            ...    service_port=${service_port}   end_point=${end_point}    set_json_content_type=${set_json_content_type}
             IF    ${status}
                 BREAK
             END
@@ -577,6 +585,7 @@ Set Model Server Runtime
     EXCEPT
         Log    framework ${runtime} does not appear to be supported by the chosen model server
     END
+
 
 Get Kserve Inference Host Via UI
     [Documentation]    Fetches the host of the model's URL from the Data Science Project UI

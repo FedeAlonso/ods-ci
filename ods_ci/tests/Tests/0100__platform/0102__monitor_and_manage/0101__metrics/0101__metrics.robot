@@ -28,6 +28,7 @@ Test Existence of Prometheus Alerting Rules
     [Tags]    Smoke
     ...       Tier1
     ...       ODS-509
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
     Check Prometheus Alerting Rules
 
@@ -36,6 +37,7 @@ Test Existence of Prometheus Recording Rules
     [Tags]    Smoke
     ...       Tier1
     ...       ODS-510
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
     Check Prometheus Recording Rules
 
@@ -44,6 +46,7 @@ Test Metric "Notebook CPU Usage" On ODS Prometheus
     [Tags]    Sanity
     ...       Tier1
     ...       ODS-178
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
     ${cpu_usage_before} =    Read Current CPU Usage
     Run Jupyter Notebook For 5 Minutes
@@ -56,6 +59,7 @@ Test Metric "Rhods_Total_Users" On ODS Prometheus
     [Tags]    Sanity
     ...       Tier1
     ...       ODS-628
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
     # Note: the expression ends with "step=1" to obtain the value for current second
     ${expression} =    Set Variable    rhods_total_users&step=1
@@ -81,6 +85,7 @@ Test Metric Existence For "Rhods_Aggregate_Availability" On ODS Prometheus
     [Tags]    Sanity
     ...       Tier1
     ...       ODS-636
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
     ${expression} =    Set Variable    rhods_aggregate_availability&step=1
     ${resp} =    Prometheus.Run Query    ${RHODS_PROMETHEUS_URL}    ${RHODS_PROMETHEUS_TOKEN}    ${expression}
@@ -88,6 +93,138 @@ Test Metric Existence For "Rhods_Aggregate_Availability" On ODS Prometheus
     @{list_values} =    Create List    1    0
     Should Contain    ${list_values}    ${resp.json()["data"]["result"][0]["value"][-1]}
 
+Test Targets Are Available And Up In RHOAI Prometheus
+    [Documentation]   Verifies the expected targets in Prometheus are available and up running
+    [Tags]    Sanity
+    ...       Tier1
+    ...       ODS-179
+    ...       RHOAIENG-13066
+    ...       Monitoring
+    Skip If RHODS Is Self-Managed
+    @{targets} =    Prometheus.Get Target Pools Which Have State Up
+    ...    pm_url=${RHODS_PROMETHEUS_URL}
+    ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+    ...    username=${OCP_ADMIN_USER.USERNAME}
+    ...    password=${OCP_ADMIN_USER.PASSWORD}
+    List Should Contain Value    ${targets}    CodeFlare Operator
+    List Should Contain Value    ${targets}    Data Science Pipelines Operator
+    List Should Contain Value    ${targets}    Federate Prometheus
+    List Should Contain Value    ${targets}    Kserve Controller Manager
+    List Should Contain Value    ${targets}    KubeRay Operator
+    List Should Contain Value    ${targets}    Kubeflow Notebook Controller Service Metrics
+    List Should Contain Value    ${targets}    Kueue Operator
+    List Should Contain Value    ${targets}    Modelmesh Controller
+    List Should Contain Value    ${targets}    ODH Model Controller
+    List Should Contain Value    ${targets}    ODH Notebook Controller Service Metrics
+    List Should Contain Value    ${targets}    TrustyAI Controller Manager
+    List Should Contain Value    ${targets}    user_facing_endpoints_status_codeflare
+    List Should Contain Value    ${targets}    user_facing_endpoints_status_dsp
+    List Should Contain Value    ${targets}    user_facing_endpoints_status_rhods_dashboard
+    List Should Contain Value    ${targets}    user_facing_endpoints_status_workbenches
+
+Test RHOAI Operator Metrics Are Defined
+    [Documentation]   Verifies the RHOAI Operator Metrics are defined and show meaningful values
+    [Tags]    Sanity
+    ...       Tier1
+    ...       ODS-192
+    ...       RHOAIENG-13081
+    ...       Monitoring
+    Skip If RHODS Is Self-Managed
+    @{expected_metric_names} =    Create List  controller_runtime_active_workers
+    ...                                     controller_runtime_max_concurrent_reconciles  controller_runtime_reconcile_errors_total
+    ...                                     controller_runtime_reconcile_time_seconds_bucket  controller_runtime_reconcile_time_seconds_count
+    ...                                     controller_runtime_reconcile_time_seconds_sum  controller_runtime_reconcile_total
+
+    @{expected_controller_names} =     Create List  auth  codeflare  dashboard
+    ...                                    datasciencecluster  datasciencepipelines  dscinitialization  kserve  kueue
+    ...                                    modelcontroller  modelmeshserving  modelregistry  monitoring  ray
+    ...                                    trainingoperator  trustyai  workbenches
+
+    FOR   ${controller}    IN    @{expected_controller_names}
+            ${response} =    Prometheus.Run Query
+            ...    pm_url=${RHODS_PROMETHEUS_URL}
+            ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+            ...    pm_query={job="RHOAI Metrics", controller="${controller}"}
+
+            ${metrics_names} =   Run  echo '${response.text}' | jq '.data.result[].metric.__name__'
+
+            FOR    ${metric}    IN    @{expected_metric_names}
+                   Should Contain    ${metrics_names}    ${metric}
+            END
+    END
+
+    @{expected_method_names} =    Create List   GET   POST   PUT   DELETE   PATCH
+    FOR    ${method}      IN     @{expected_method_names}
+            ${response} =    Prometheus.Run Query
+            ...    pm_url=${RHODS_PROMETHEUS_URL}
+            ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+            ...    pm_query={job="RHOAI Metrics", method="${method}"}
+            ${metrics_names} =   Run  echo '${response.text}' | jq '.data.result[].metric.__name__'
+            ${methods} =   Run  echo '${response.text}' | jq '.data.result[].metric.method'
+            Should Contain    ${methods}     ${method}
+            Should Contain    ${metrics_names}     rest_client_requests_total
+    END
+
+Test RHOAI Dashboard Metrics By Code Are Defined
+    [Documentation]   Verifies the RHOAI Dashboard Metrics By Code Are Defined and show accurate values
+    ...               (2xx and 5xx codes)
+    [Tags]    Sanity
+    ...       Tier1
+    ...       ODS-195
+    ...       RHOAIENG-13261
+    ...       Monitoring
+    Skip If RHODS Is Self-Managed
+    ${response_by_code} =    Prometheus.Run Query
+    ...    pm_url=${RHODS_PROMETHEUS_URL}
+    ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+    ...    pm_query=sum(haproxy_backend_http_responses_total {route='rhods-dashboard'}) by(code)
+    ${response_5xx} =    Prometheus.Run Query
+    ...    pm_url=${RHODS_PROMETHEUS_URL}
+    ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+    ...    pm_query=sum(haproxy_backend_http_responses_total{route='rhods-dashboard', code='5xx'})
+    ${response_2xx} =    Prometheus.Run Query
+    ...    pm_url=${RHODS_PROMETHEUS_URL}
+    ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+    ...    pm_query=sum(haproxy_backend_http_responses_total{route='rhods-dashboard', code='2xx'})
+
+    @{metrics_by_code} =    Set Variable    ${response_by_code.json()["data"]["result"]}
+    ${metrics_by_code_5xx} =    Set Variable    ${metrics_by_code[4]["value"][-1]}
+    ${metrics_by_code_5xx} =    Convert To Number    ${metrics_by_code_5xx}    2
+    ${metrics_by_code_2xx} =    Set Variable    ${metrics_by_code[1]["value"][-1]}
+    ${metrics_by_code_2xx} =    Convert To Number    ${metrics_by_code_2xx}    2
+    ${metrics_5xx} =    Set Variable    ${response_5xx.json()["data"]["result"][0]["value"][-1]}
+    ${metrics_5xx} =    Convert To Number    ${metrics_5xx}    2
+    ${metrics_2xx} =    Set Variable    ${response_2xx.json()["data"]["result"][0]["value"][-1]}
+    ${metrics_2xx} =    Convert To Number    ${metrics_2xx}    2
+
+    Should Be True      ${metrics_by_code_5xx} == ${metrics_5xx}
+    Should Be True      ${metrics_by_code_2xx} == ${metrics_2xx}
+
+Test RHOAI Dashboard Metrics Are Defined
+    [Documentation]   Verifies the RHOAI Dashboard Metrics Are Defined and show meaningful values
+    [Tags]    Sanity
+    ...       Tier1
+    ...       ODS-194
+    ...       RHOAIENG-13260
+    ...       Monitoring
+    Skip If RHODS Is Self-Managed
+    ${response} =    Prometheus.Run Query
+    ...    pm_url=${RHODS_PROMETHEUS_URL}
+    ...    pm_token=${RHODS_PROMETHEUS_TOKEN}
+    ...    pm_query={job="user_facing_endpoints_status_rhods_dashboard"}
+
+    ${metrics_names} =   Run  echo '${response.text}' | jq .data.result[].metric.__name__
+    @{expected_metric_names} =    Create List  probe_dns_lookup_time_seconds  probe_duration_seconds  probe_failed_due_to_regex
+    ...                                     probe_http_content_length  probe_http_duration_seconds  probe_http_last_modified_timestamp_seconds
+    ...                                     probe_http_redirects  probe_http_ssl  probe_http_status_code  probe_http_uncompressed_body_length
+    ...                                     probe_http_version  probe_ip_addr_hash  probe_ip_protocol  probe_ssl_earliest_cert_expiry
+    ...                                     probe_ssl_last_chain_expiry_timestamp_seconds  probe_ssl_last_chain_info  probe_success
+    ...                                     probe_tls_version_info  scrape_duration_seconds  scrape_samples_post_metric_relabeling
+    ...                                     scrape_samples_scraped  scrape_series_added
+
+    FOR    ${metric}    IN    @{expected_metric_names}
+        Should Contain    ${metrics_names}    ${metric}
+    END
 
 *** Keywords ***
 Begin Metrics Web Test
@@ -142,7 +279,7 @@ Iterative Image Test
     Login To Jupyterhub    ${TEST_USER.USERNAME}    ${TEST_USER.PASSWORD}    ${TEST_USER.AUTH_TYPE}
     Page Should Not Contain    403 : Forbidden
     ${authorization_required} =    Is Service Account Authorization Required
-    IF    ${authorization_required}    Authorize jupyterhub service account
+    IF    ${authorization_required}    Authorize JupyterLab Service Account
     Fix Spawner Status
     Spawn Notebook With Arguments    image=${image}
     Run Cell And Check Output    print("Hello World!")    Hello World!

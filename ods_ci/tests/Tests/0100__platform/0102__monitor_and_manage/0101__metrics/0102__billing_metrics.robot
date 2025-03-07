@@ -27,6 +27,7 @@ Verify OpenShift Monitoring Results Are Correct When Running Undefined Queries
     [Tags]    Sanity
     ...       Tier1
     ...       ODS-173
+    ...       Monitoring
     Run OpenShift Metrics Query    ${METRIC_RHODS_UNDEFINED}   username=${OCP_ADMIN_USER.USERNAME}   password=${OCP_ADMIN_USER.PASSWORD}
     ...    auth_type=${OCP_ADMIN_USER.AUTH_TYPE}   retry_attempts=1
     Metrics.Verify Query Results Dont Contain Data
@@ -37,6 +38,7 @@ Test Billing Metric (Notebook Cpu Usage) On OpenShift Monitoring
     [Tags]    Sanity
     ...       Tier1
     ...       ODS-175
+    ...       Monitoring
     Run Jupyter Notebook For 5 Minutes
     Verify Previus CPU Usage Is Greater Than Zero
     [Teardown]    CleanUp JupyterHub And Close All Browsers
@@ -46,6 +48,7 @@ Test Metric "Rhods_Total_Users" On Cluster Monitoring Prometheus
     [Tags]    Sanity
     ...       ODS-634
     ...       Tier1
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
     ${value} =    Run OpenShift Metrics Query    query=rhods_total_users   username=${OCP_ADMIN_USER.USERNAME}   password=${OCP_ADMIN_USER.PASSWORD}
     ...    auth_type=${OCP_ADMIN_USER.AUTH_TYPE}
@@ -59,7 +62,7 @@ Test Metric "Rhods_Aggregate_Availability" On Cluster Monitoring Prometheus
     [Tags]    Smoke
     ...       ODS-637
     ...       Tier1
-
+    ...       Monitoring
     Skip If RHODS Is Self-Managed
 
     ${value_openshift_observe} =    Run OpenShift Metrics Query
@@ -80,7 +83,7 @@ Test Metric "Active_Users" On OpenShift Monitoring On Cluster Monitoring Prometh
     [Tags]    Sanity
     ...       ODS-1053
     ...       Tier1
-
+    ...       Monitoring
     ${active_users_before} =    Run OpenShift Metrics Query
     ...    username=${OCP_ADMIN_USER.USERNAME}    password=${OCP_ADMIN_USER.PASSWORD}
     ...    auth_type=${OCP_ADMIN_USER.AUTH_TYPE}   query=cluster:usage:consumption:rhods:active_users
@@ -110,6 +113,7 @@ Test Metric "Active Notebook Pod Time" On OpenShift Monitoring - Cluster Monitor
     [Tags]    Sanity
     ...       ODS-1055
     ...       Tier1
+    ...       Monitoring
     @{list_of_usernames} =    Create List    ${TEST_USER_3.USERNAME}    ${TEST_USER_4.USERNAME}
     Log In N Users To JupyterLab And Launch A Notebook For Each Of Them
     ...    list_of_usernames=${list_of_usernames}
@@ -137,7 +141,7 @@ Test Setup For Matrics Web Test
     Wait Until OpenShift Console Is Loaded
     Click Button    Observe
     Click Link    Metrics
-    Wait Until Element Is Visible    xpath://textarea[@class="pf-v5-c-form-control query-browser__query-input"]
+    Wait Until Element Is Visible    xpath://textarea[@class="pf-v6-c-form-control query-browser__query-input"]
 
 Test Teardown For Matrics Web Test
     [Documentation]     Closes all browsers
@@ -146,10 +150,10 @@ Test Teardown For Matrics Web Test
 Run Query On Metrics And Return Value
     [Documentation]    Fires query in metrics through web browser and returns value
     [Arguments]    ${query}    ${count_of_columns}    # count of columns + 1 like name,values example: ${count_of_columns}=3
-    Input Text    xpath://textarea[@class="pf-v5-c-form-control query-browser__query-input"]    ${query}
+    Input Text    xpath://textarea[@class="pf-v6-c-form-control query-browser__query-input"]    ${query}
     Click Button    Run queries
-    Wait Until Element is Visible    xpath://table[@class="pf-v5-c-table pf-m-compact"]    timeout=15seconds
-    @{data} =    Get WebElements    //table[@class="pf-v5-c-table pf-m-compact"] //tbody/tr/td[${count_of_columns}]
+    Wait Until Element is Visible    xpath://table[@class="pf-v6-c-table pf-m-compact"]    timeout=15seconds
+    @{data} =    Get WebElements    //table[@class="pf-v6-c-table pf-m-compact"] //tbody/tr/td[${count_of_columns}]
     RETURN    ${data[0].text}
 
 Fire Query On RHODS Prometheus And Return Value
@@ -198,7 +202,7 @@ Iterative Image Test
     Login To Jupyterhub    ${TEST_USER.USERNAME}    ${TEST_USER.PASSWORD}    ${TEST_USER.AUTH_TYPE}
     Page Should Not Contain    403 : Forbidden
     ${authorization_required} =    Is Service Account Authorization Required
-    IF    ${authorization_required}    Authorize jupyterhub service account
+    IF    ${authorization_required}    Authorize JupyterLab Service Account
     Fix Spawner Status
     Spawn Notebook With Arguments    image=${image}
     Run Cell And Check Output    print("Hello World!")    Hello World!
@@ -220,7 +224,7 @@ CleanUp JupyterHub
     Login To Jupyterhub    ${TEST_USER.USERNAME}    ${TEST_USER.PASSWORD}    ${TEST_USER.AUTH_TYPE}
     Page Should Not Contain    403 : Forbidden
     ${authorization_required} =    Is Service Account Authorization Required
-    IF    ${authorization_required}    Authorize jupyterhub service account
+    IF    ${authorization_required}    Authorize JupyterLab Service Account
     # Additional check on running server
     ${control_panel_visible} =  Control Panel Is Visible
     IF  ${control_panel_visible}==True

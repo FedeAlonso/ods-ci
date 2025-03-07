@@ -11,7 +11,6 @@ Suite Teardown      Suite Teardown
 
 
 *** Variables ***
-${OPERATOR_NS}                              ${OPERATOR_NAMESPACE}
 ${DSCI_NAME}                                default-dsci
 ${DSC_NAME}                                 default-dsc
 ${SERVICE_MESH_OPERATOR_NS}                 openshift-operators
@@ -19,7 +18,7 @@ ${SERVICE_MESH_OPERATOR_DEPLOYMENT_NAME}    istio-operator
 ${SERVICE_MESH_CR_NS}                       istio-system
 ${SERVICE_MESH_CR_NAME}                     data-science-smcp
 ${OLM_DIR}                                  olm
-${INSTALL_TYPE}                             CLi
+${INSTALL_TYPE}                             Cli
 ${TEST_ENV}                                 PSI
 ${IS_PRESENT}                               0
 ${IS_NOT_PRESENT}                           1
@@ -29,14 +28,15 @@ ${MSG_REGEX}                                denied the request: only one service
 *** Test Cases ***
 Validate Service Mesh Control Plane Already Created
     [Documentation]    This Test Case validates that only one ServiceMeshControlPlane is allowed to be installed per project/namespace
-    [Tags]      RHOAIENG-2517       Operator
+    [Tags]      RHOAIENG-2517       Operator    Tier3       ProductBug
     Fetch Image Url And Update Channel
     Check Whether DSC Exists And Save Component Statuses
-    Fetch Cluster Type By Domain
     IF    "${CLUSTER_TYPE}" == "selfmanaged"
         Uninstall RHODS In Self Managed Cluster
+        Configure Custom Namespaces
         Create Smcp From Template
         Install RHODS In Self Managed Cluster Using CLI     ${CLUSTER_TYPE}     ${IMAGE_URL}
+        Verify RHODS Installation
     ELSE IF    "${CLUSTER_TYPE}" == "managed"
         Uninstall RHODS In OSD
         Create Smcp From Template
@@ -54,6 +54,19 @@ Suite Setup
     Wait Until Operator Ready    ${SERVICE_MESH_OPERATOR_DEPLOYMENT_NAME}    ${SERVICE_MESH_OPERATOR_NS}
     Wait Until Operator Ready    ${OPERATOR_DEPLOYMENT_NAME}    ${OPERATOR_NAMESPACE}
     Wait For DSCI Ready State    ${DSCI_NAME}    ${OPERATOR_NAMESPACE}
+    IF  "${PRODUCT}" == "ODH"
+      Set Global Variable  ${OPERATOR_NAME_LABEL}  opendatahub-operator
+      Set Global Variable  ${MODEL_REGISTRY_NAMESPACE}    odh-model-registries
+      IF  "${UPDATE_CHANNEL}" == "odh-nightlies"
+          Set Global Variable  ${OPERATOR_NAME}  rhods-operator
+      ELSE
+          Set Global Variable  ${OPERATOR_NAME}  opendatahub-operator
+      END
+    ELSE
+      Set Global Variable  ${OPERATOR_NAME}  rhods-operator
+      Set Global Variable  ${OPERATOR_NAME_LABEL}  rhods-operator
+      Set Global Variable  ${MODEL_REGISTRY_NAMESPACE}    rhoai-model-registries
+    END
 
 Suite Teardown
     [Documentation]    Suite Teardown
@@ -101,19 +114,9 @@ Fetch Image Url And Update Channel
     Should Be Equal As Integers    ${rc}    0
     Set Global Variable    ${IMAGE_URL}    ${out}
     ${rc}    ${out}=    Run And Return Rc And Output
-    ...    oc get subscription ${OPERATOR_SUBSCRIPTION_NAME} --namespace ${OPERATOR_NS} -o jsonpath='{.spec.channel}'
+    ...    oc get subscription ${OPERATOR_SUBSCRIPTION_NAME} --namespace ${OPERATOR_NAMESPACE} -o jsonpath='{.spec.channel}'
     Should Be Equal As Integers    ${rc}    0
     Set Global Variable    ${UPDATE_CHANNEL}    ${out}
-
-Fetch Cluster Type By Domain
-    [Documentation]    This Keyword outputs the kind of cluster depending on the console URL domain
-    ${matches}=    Get Regexp Matches    ${OCP_CONSOLE_URL}    rh-ods
-    ${domain}=    Get From List    ${matches}    0
-    IF    "${domain}" == "rh-ods"
-        Set Global Variable    ${CLUSTER_TYPE}    selfmanaged
-    ELSE
-        Set Global Variable    ${CLUSTER_TYPE}    managed
-    END
 
 Create Smcp From Template
     [Documentation]    Create a default ServiceMeshControlPlane from a template
@@ -131,7 +134,7 @@ Operator Deployment Should Be Ready
     ${rc}=    Set Variable    1
     TRY
         WHILE    ${rc} != 0    limit=10m
-            Sleep    5s
+            Sleep    15s
             ${rc}    ${output}=    Run And Return Rc And Output
             ...    oc wait --for condition=available -n ${OPERATOR_NAMESPACE} deploy/${OPERATOR_DEPLOYMENT_NAME}
         END

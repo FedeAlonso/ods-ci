@@ -2,23 +2,41 @@
 Documentation    This is a resource file for Distributed Workloads.
 Library          OperatingSystem
 Library          Process
+Resource          ../../../../tasks/Resources/RHODS_OLM/install/oc_install.robot
 
 
 *** Variables ***
-${CODEFLARE-SDK-RELEASE-TAG}             v0.23.1
+${CODEFLARE-SDK-RELEASE-TAG}             v0.26.0
 ${CODEFLARE-SDK-RELEASE-TAG-3.9}         adjustments-release-0.21.1
 ${CODEFLARE-SDK_DIR}                     codeflare-sdk
 ${CODEFLARE-SDK_REPO_URL}                %{CODEFLARE-SDK_REPO_URL=https://github.com/project-codeflare/codeflare-sdk.git}
 ${DISTRIBUTED_WORKLOADS_RELEASE_ASSETS}  https://github.com/opendatahub-io/distributed-workloads/releases/latest/download
-${RAY_IMAGE_3.11}                        quay.io/modh/ray@sha256:db667df1bc437a7b0965e8031e905d3ab04b86390d764d120e05ea5a5c18d1b4
-${RAY_IMAGE_3.9}                         quay.io/modh/ray@sha256:0d715f92570a2997381b7cafc0e224cfa25323f18b9545acfd23bc2b71576d06
-${FMS_HF_TUNING_IMAGE}                   quay.io/modh/fms-hf-tuning@sha256:6f98907f9095db72932caa54094438eae742145f4b66c28d15887d5303ff1186
+# Corresponds to quay.io/modh/ray:2.35.0-py311-cu121
+${RAY_CUDA_IMAGE_3.11}                   quay.io/modh/ray@sha256:db667df1bc437a7b0965e8031e905d3ab04b86390d764d120e05ea5a5c18d1b4
+# Corresponds to quay.io/rhoai/ray:2.35.0-py311-cu121-torch24-fa26
+${RAY_TORCH_CUDA_IMAGE_3.11}             quay.io/rhoai/ray@sha256:5077f9bb230dfa88f34089fecdfcdaa8abc6964716a8a8325c7f9dcdf11bbbb3
+# Corresponds to quay.io/modh/ray:2.35.0-py311-rocm62
+${RAY_ROCM_IMAGE_3.11}                   quay.io/modh/ray@sha256:baeb1428a008ff109ae1afb372f804c574b4179cfa84c752f7afc609e0d44b3a
+# Corresponds to quay.io/rhoai/ray:2.35.0-py311-rocm61-torch24-fa26
+${RAY_TORCH_ROCM_IMAGE_3.11}             quay.io/rhoai/ray@sha256:b0e129cd2f4cdea7ad7a7859031357ffd9915410551f94fbcb942af2198cdf78
+# Corresponds to quay.io/modh/ray:2.35.0-py39-cu121
+${RAY_CUDA_IMAGE_3.9}                    quay.io/modh/ray@sha256:0d715f92570a2997381b7cafc0e224cfa25323f18b9545acfd23bc2b71576d06
+# Corresponds to quay.io/rhoai/ray:2.35.0-py39-cu121-torch24-fa26
+${RAY_TORCH_CUDA_IMAGE_3.9}              quay.io/rhoai/ray@sha256:158b481b8e9110008d60ac9fb8d156eadd71cb057ac30382e62e3a231ceb39c0
+# Corresponds to quay.io/modh/fms-hf-tuning:v2.6.0
+${FMS_HF_TUNING_IMAGE}                   quay.io/modh/fms-hf-tuning@sha256:0c69cf850fd2e5850cdec1d81c303af5c3900359b97016958c9af6637ad8ee2e
+# Corresponds to quay.io/modh/training:py311-cuda121-torch241
 ${CUDA_TRAINING_IMAGE}                   quay.io/modh/training@sha256:b98e373a972ff6f896a9dc054d56920e915675339c02ea7fa123e0f4bbef4d74
-${ROCM_TRAINING_IMAGE}                   quay.io/modh/training@sha256:2efb6efba4ec08e63847d701e3062a5f6ddf51c91af5fbcef6378b9e6520a3bb
+# Corresponds to quay.io/modh/training:py311-rocm62-torch241
+${ROCM_TRAINING_IMAGE}                   quay.io/modh/training@sha256:02094ab6f98a9b8a8bea8ff72bde5b4ba6789d036ce19e15cfdea0146d288061
+# Corresponds to quay.io/modh/odh-generic-data-science-notebook:v3-2024b-20250212
+${NOTEBOOK_IMAGE_3.11}                   quay.io/modh/odh-generic-data-science-notebook@sha256:d0ba5fc23e2b3846763f60e8ade8a0f561cdcd2bf6717df6e732f6f8b68b89c4
+# Corresponds to quay.io/modh/odh-generic-data-science-notebook:v2-2024a-20250116
+${NOTEBOOK_IMAGE_3.9}                    quay.io/modh/odh-generic-data-science-notebook@sha256:3e51c462fc03b5ccb080f006ced86d36480da036fa04b8685a3e4d6d51a817ba
 ${NOTEBOOK_USER_NAME}                    ${TEST_USER_3.USERNAME}
 ${NOTEBOOK_USER_PASSWORD}                ${TEST_USER_3.PASSWORD}
-${KFTO_CORE_BINARY_NAME}                 kfto
-${KFTO_UPGRADE_BINARY_NAME}              kfto-upgrade
+${FMS_BINARY_NAME}                       fms
+${KFTO_BINARY_NAME}                      kfto
 ${ODH_BINARY_NAME}                       odh
 ${PIP_INDEX_URL}                         ${PIP_INDEX_URL}
 ${PIP_TRUSTED_HOST}                      ${PIP_TRUSTED_HOST}
@@ -53,7 +71,7 @@ Run Codeflare-SDK Test
     [Documentation]   Run codeflare-sdk Test
     [Arguments]    ${TEST_TYPE}    ${TEST_NAME}    ${PYTHON_VERSION}    ${RAY_IMAGE}    ${RELEASE_BRANCH}
     Log To Console    "Running codeflare-sdk test: ${TEST_NAME}"
-    ${result} =    Run Process  cd ${CODEFLARE-SDK_DIR} && git fetch origin && git checkout ${RELEASE_BRANCH} && git branch && poetry env use ${PYTHON_VERSION} && poetry install --with test,docs && poetry run pytest -v -s ./tests/${TEST_TYPE}/${TEST_NAME} --timeout\=420
+    ${result} =    Run Process  cd ${CODEFLARE-SDK_DIR} && git fetch origin && git checkout ${RELEASE_BRANCH} && git branch && poetry env use ${PYTHON_VERSION} && poetry install --with test,docs && poetry run pytest -v -s ./tests/${TEST_TYPE}/${TEST_NAME} --timeout\=540
     ...    env:RAY_IMAGE=${RAY_IMAGE}
     ...    env:AWS_DEFAULT_ENDPOINT=${AWS_DEFAULT_ENDPOINT}
     ...    env:AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
@@ -87,13 +105,13 @@ Cleanup Codeflare-SDK Setup
     Log To Console     "Removing directory ${CODEFLARE-SDK_DIR}"
     Remove Directory        ${CODEFLARE-SDK_DIR}    recursive=True
 
-Prepare Training Operator E2E Core Test Suite
-    [Documentation]    Prepare Training Operator E2E Core Test Suite
-    Prepare Training Operator E2E Test Suite    ${KFTO_CORE_BINARY_NAME}
+Prepare Training Operator KFTO E2E Test Suite
+    [Documentation]    Prepare Training Operator KFTO E2E Test Suite
+    Prepare Training Operator E2E Test Suite    ${KFTO_BINARY_NAME}
 
-Prepare Training Operator E2E Upgrade Test Suite
-    [Documentation]    Prepare Training Operator E2E Upgrade Test Suite
-    Prepare Training Operator E2E Test Suite    ${KFTO_UPGRADE_BINARY_NAME}
+Prepare Training Operator FMS E2E Test Suite
+    [Documentation]    Prepare Training Operator FMS E2E Test Suite
+    Prepare Training Operator E2E Test Suite    ${FMS_BINARY_NAME}
 
 Prepare Training Operator E2E Test Suite
     [Documentation]    Prepare Training Operator E2E Test Suite
@@ -109,14 +127,29 @@ Prepare Training Operator E2E Test Suite
     Create Directory    %{WORKSPACE}/codeflare-${test_binary}-logs
     Enable Component    trainingoperator
     Wait Component Ready    trainingoperator
+    Log To Console    "Additional waiting due to RHOAIENG-20295"
+    ${result} =    Run Process    oc wait --for\=condition\=Available --timeout\=300s -n ${APPLICATIONS_NAMESPACE} deployment/kubeflow-training-operator
+    ...    shell=true    stderr=STDOUT
+    Log To Console    ${result.stdout}
+    IF    ${result.rc} != 0
+        FAIL    Timeout waiting for deployment/kubeflow-training-operator to be available in ${APPLICATIONS_NAMESPACE}
+    END
 
-Teardown Training Operator E2E Core Test Suite
-    [Documentation]    Prepare Training Operator E2E Core Test Suite
-    Teardown Training Operator E2E Test Suite    ${KFTO_CORE_BINARY_NAME}
+Prepare Training Operator SDK Test Suite
+    [Documentation]    Prepare Training Operator SDK Test Suite
+    Prepare Training Operator E2E Test Suite    ${KFTO_BINARY_NAME}
+    ${common_user_token} =    Generate User Token    ${NOTEBOOK_USER_NAME}    ${NOTEBOOK_USER_PASSWORD}
+    Set Suite Variable    ${NOTEBOOK_USER_TOKEN}   ${common_user_token}
+    Log To Console    "Log back as cluster admin"
+    Login To OCP Using API    ${OCP_ADMIN_USER.USERNAME}    ${OCP_ADMIN_USER.PASSWORD}
 
-Teardown Training Operator E2E Upgrade Test Suite
-    [Documentation]    Prepare Training Operator E2E Upgrade Test Suite
-    Teardown Training Operator E2E Test Suite    ${KFTO_UPGRADE_BINARY_NAME}
+Teardown Training Operator KFTO E2E Test Suite
+    [Documentation]    Teardown Training Operator KFTO E2E Test Suite
+    Teardown Training Operator E2E Test Suite    ${KFTO_BINARY_NAME}
+
+Teardown Training Operator FMS E2E Test Suite
+    [Documentation]    Teardown Training Operator FMS E2E Test Suite
+    Teardown Training Operator E2E Test Suite    ${FMS_BINARY_NAME}
 
 Teardown Training Operator E2E Test Suite
     [Documentation]    Teardown Training Operator E2E Test Suite
@@ -125,28 +158,27 @@ Teardown Training Operator E2E Test Suite
     Remove File        ${test_binary}
     Disable Component    trainingoperator
 
-Run Training Operator ODH Core Test
-    [Documentation]    Run Training Operator ODH Core Test
-    [Arguments]    ${TEST_NAME}
-    Run Training Operator ODH Test   ${TEST_NAME}   ${KFTO_CORE_BINARY_NAME}
+Teardown Training Operator SDK Test Suite
+    [Documentation]    Teardown Training Operator SDK Test Suite
+    Teardown Training Operator E2E Test Suite    ${KFTO_BINARY_NAME}
 
-Run Training Operator ODH Upgrade Test
-    [Documentation]    Run Training Operator ODH Upgrade Test
+Run Training Operator FMS Test
+    [Documentation]    Run Training Operator FMS Test
     [Arguments]    ${TEST_NAME}
-    Run Training Operator ODH Test   ${TEST_NAME}   ${KFTO_UPGRADE_BINARY_NAME}
-
-Run Training Operator ODH Test
-    [Documentation]    Run Training Operator ODH Test
-    [Arguments]    ${TEST_NAME}    ${test_binary}
     Log To Console    "Running test: ${TEST_NAME}"
-    ${result} =    Run Process    ./${test_binary} -test.run ${TEST_NAME}
+    ${result} =    Run Process    ./${FMS_BINARY_NAME} -test.run ${TEST_NAME}
     ...    shell=true
     ...    stderr=STDOUT
     ...    env:CODEFLARE_TEST_TIMEOUT_SHORT=5m
     ...    env:CODEFLARE_TEST_TIMEOUT_MEDIUM=10m
     ...    env:CODEFLARE_TEST_TIMEOUT_LONG=20m
-    ...    env:CODEFLARE_TEST_OUTPUT_DIR=%{WORKSPACE}/codeflare-${test_binary}-logs
+    ...    env:CODEFLARE_TEST_OUTPUT_DIR=%{WORKSPACE}/codeflare-${FMS_BINARY_NAME}-logs
     ...    env:FMS_HF_TUNING_IMAGE=${FMS_HF_TUNING_IMAGE}
+    ...    env:AWS_DEFAULT_ENDPOINT=${AWS_DEFAULT_ENDPOINT}
+    ...    env:AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    ...    env:AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    ...    env:AWS_STORAGE_BUCKET_DOWNLOAD=${AWS_STORAGE_BUCKET}
+    ...    env:AWS_STORAGE_BUCKET_DOWNLOAD_MODEL_PATH=models/granite-3b-code-base-2k
     Log To Console    ${result.stdout}
     Check missing Go test    ${result.stdout}
     IF    ${result.rc} != 0
@@ -157,14 +189,49 @@ Run Training Operator KFTO Test
     [Documentation]    Run Training Operator KFTO Test
     [Arguments]    ${TEST_NAME}    ${TRAINING_IMAGE}
     Log To Console    "Running test: ${TEST_NAME}"
-    ${result} =    Run Process    ./${KFTO_CORE_BINARY_NAME} -test.run ${TEST_NAME}
+    ${result} =    Run Process    ./${KFTO_BINARY_NAME} -test.run ${TEST_NAME}
     ...    shell=true
     ...    stderr=STDOUT
     ...    env:CODEFLARE_TEST_TIMEOUT_SHORT=5m
     ...    env:CODEFLARE_TEST_TIMEOUT_MEDIUM=10m
     ...    env:CODEFLARE_TEST_TIMEOUT_LONG=20m
-    ...    env:CODEFLARE_TEST_OUTPUT_DIR=%{WORKSPACE}/codeflare-${KFTO_CORE_BINARY_NAME}-logs
+    ...    env:CODEFLARE_TEST_OUTPUT_DIR=%{WORKSPACE}/codeflare-${KFTO_BINARY_NAME}-logs
     ...    env:CODEFLARE_TEST_TRAINING_IMAGE=${TRAINING_IMAGE}
+    ...    env:AWS_DEFAULT_ENDPOINT=${AWS_DEFAULT_ENDPOINT}
+    ...    env:AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    ...    env:AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    ...    env:AWS_STORAGE_BUCKET=${AWS_STORAGE_BUCKET}
+    ...    env:AWS_STORAGE_BUCKET_MNIST_DIR=${AWS_STORAGE_BUCKET_MNIST_DIR}
+    ...    env:PIP_INDEX_URL=${PIP_INDEX_URL}
+    ...    env:PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}
+    Log To Console    ${result.stdout}
+    Check missing Go test    ${result.stdout}
+    IF    ${result.rc} != 0
+        FAIL    ${TEST_NAME} failed
+    END
+
+Run Training Operator KFTO SDK Test
+    [Documentation]    Run Training Operator KFTO SDK Test
+    [Arguments]    ${TEST_NAME}
+    Log To Console    "Running test: ${TEST_NAME}"
+    ${result} =    Run Process    ./${KFTO_BINARY_NAME} -test.run ${TEST_NAME}
+    ...    shell=true
+    ...    stderr=STDOUT
+    ...    env:CODEFLARE_TEST_TIMEOUT_SHORT=10m
+    ...    env:CODEFLARE_TEST_TIMEOUT_MEDIUM=15m
+    ...    env:CODEFLARE_TEST_TIMEOUT_LONG=20m
+    ...    env:ODH_NAMESPACE=${APPLICATIONS_NAMESPACE}
+    ...    env:CODEFLARE_TEST_OUTPUT_DIR=%{WORKSPACE}/codeflare-${KFTO_BINARY_NAME}-logs
+    ...    env:AWS_DEFAULT_ENDPOINT=${AWS_DEFAULT_ENDPOINT}
+    ...    env:AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    ...    env:AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    ...    env:AWS_STORAGE_BUCKET=${AWS_STORAGE_BUCKET}
+    ...    env:AWS_STORAGE_BUCKET_MNIST_DIR=${AWS_STORAGE_BUCKET_MNIST_DIR}
+    ...    env:PIP_INDEX_URL=${PIP_INDEX_URL}
+    ...    env:PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}
+    ...    env:NOTEBOOK_USER_NAME=${NOTEBOOK_USER_NAME}
+    ...    env:NOTEBOOK_USER_TOKEN=${NOTEBOOK_USER_TOKEN}
+    ...    env:NOTEBOOK_IMAGE=${NOTEBOOK_IMAGE_3.11}
     Log To Console    ${result.stdout}
     Check missing Go test    ${result.stdout}
     IF    ${result.rc} != 0
@@ -239,3 +306,59 @@ Check missing Go test
     [Documentation]    Check that upstream Go test is not missing
     [Arguments]    ${test_run_output}
     Should Not Contain    ${test_run_output}    testing: warning: no tests to run    No Go tests were run
+
+Verify container images
+    [Documentation]    Verify container images
+    [Arguments]    ${pod_name}    ${container}    ${expected_image}
+    ${test_env}=  Is Test Enviroment ROSA-HCP
+    # We use Kyverno custom policies to pull unreleased images from quay registry for hypershift clusters
+    ${registry_name} =   Set Variable If    ${test_env}==True
+    ...    quay.io
+    ...    registry.redhat.io
+    Log To Console    Verifying ${pod_name}'s container image is referred from ${registry_name}
+    ${pod} =    Find First Pod By Name  namespace=${APPLICATIONS_NAMESPACE}   pod_regex=${pod_name}
+    Container Image Url Should Contain      ${APPLICATIONS_NAMESPACE}     ${pod}      ${container}
+    ...     ${registry_name}/rhoai/${expected_image}
+    Log To Console    ${pod_name}'s container image is verified
+
+Enable appwrapper in Codeflare operator
+    [Documentation]    Enable appwrapper in Codeflare operator
+    ${result} =    Run Process    config_yaml\=\$(oc -n ${APPLICATIONS_NAMESPACE} get configmap codeflare-operator-config -o json | jq -r '.data."config.yaml"' | yq ".appwrapper.enabled\=true" | sed 's/"/\\\\"/g') && oc -n ${APPLICATIONS_NAMESPACE} get configmap codeflare-operator-config -o json | jq ".data.\\"config.yaml\\"\=\\"\$config_yaml\\"" | oc apply -n ${APPLICATIONS_NAMESPACE} -f -
+    ...    shell=true
+    ...    stderr=STDOUT
+    Log To Console    ${result.stdout}
+    IF    ${result.rc} != 0
+        FAIL    Unable to edit codeflare-operator-config configmap
+    END
+    ${result} =    Run Process    oc -n ${APPLICATIONS_NAMESPACE} delete pod -l app.kubernetes.io/name\=codeflare-operator
+    ...    shell=true
+    ...    stderr=STDOUT
+    Log To Console    ${result.stdout}
+    IF    ${result.rc} != 0
+        FAIL    Unable to reset codeflare-operator pod
+    END
+    ${result} =    Run Process    oc -n ${APPLICATIONS_NAMESPACE} wait --for\=condition\=Available deployment/codeflare-operator-manager
+    ...    shell=true
+    ...    stderr=STDOUT
+    Log To Console    ${result.stdout}
+
+Disable appwrapper in Codeflare operator
+    [Documentation]    Enable appwrapper in Codeflare operator
+    ${result} =    Run Process    config_yaml\=\$(oc -n ${APPLICATIONS_NAMESPACE} get configmap codeflare-operator-config -o json | jq -r '.data."config.yaml"' | yq ".appwrapper.enabled\=false" | sed 's/"/\\\\"/g') && oc -n ${APPLICATIONS_NAMESPACE} get configmap codeflare-operator-config -o json | jq ".data.\\"config.yaml\\"\=\\"\$config_yaml\\"" | oc apply -n ${APPLICATIONS_NAMESPACE} -f -
+    ...    shell=true
+    ...    stderr=STDOUT
+    Log To Console    ${result.stdout}
+    IF    ${result.rc} != 0
+        FAIL    Unable to edit codeflare-operator-config configmap
+    END
+    ${result} =    Run Process    oc -n ${APPLICATIONS_NAMESPACE} delete pod -l app.kubernetes.io/name\=codeflare-operator
+    ...    shell=true
+    ...    stderr=STDOUT
+    Log To Console    ${result.stdout}
+    IF    ${result.rc} != 0
+        FAIL    Unable to reset codeflare-operator pod
+    END
+    ${result} =    Run Process    oc -n ${APPLICATIONS_NAMESPACE} wait --for\=condition\=Available deployment/codeflare-operator-manager
+    ...    shell=true
+    ...    stderr=STDOUT
+    Log To Console    ${result.stdout}

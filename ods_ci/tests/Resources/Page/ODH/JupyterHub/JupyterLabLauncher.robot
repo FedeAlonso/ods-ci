@@ -178,10 +178,9 @@ Clean Up Server
     Should Match    "${ls_server}"    "${EMPTY}"
 
 Get User Notebook Pod Name
-  [Documentation]   Returns notebook pod name for given username  (e.g. for user ldap-admin1 it will be jupyterhub-nb-ldap-2dadmin1)
+  [Documentation]   Returns notebook pod name for given username  (e.g. for user ldap-admin1 it will be jupyter-nb-ldap-2dadmin1-0)
   [Arguments]  ${username}
   ${safe_username}=  Get Safe Username    ${username}
-  #${notebook_pod_name}=   Set Variable  jupyterhub-nb-${safe_username}
   ${notebook_pod_name}=   Set Variable  jupyter-nb-${safe_username}-0
   RETURN  ${notebook_pod_name}
 
@@ -225,9 +224,15 @@ Clean Up User Notebook
       Fail  msg=This command requires ${admin_username} to be connected to the cluster (oc login ...)
   END
 
+Clean All Standalone Notebooks
+    [Documentation]    Deletes all Standalone Jupyter Notebooks in ${NOTEBOOKS_NAMESPACE}
+    Delete All Notebooks In Namespace By Name    ${NOTEBOOKS_NAMESPACE}    jupyter-nb
+    Delete All Services In Namespace By Name    ${NOTEBOOKS_NAMESPACE}    jupyter-nb
+
 Delete Folder In User Notebook
   [Documentation]  Delete recursively the folder  /opt/app-root/src/${folder} in ${username}'s notebook PVC.
-...   Note: this command requires ${admin_username}  to be logged to the cluster (oc login ...) and to have the user's notebook pod running (e.g. jupyterhub-nb-ldap-2duser1)
+  ...   Note: this command requires ${admin_username} to be logged to the cluster (oc login ...)
+  ...   and to have the user's notebook pod running (e.g. jupyterhub-nb-ldap-2duser1)
   [Arguments]  ${admin_username}  ${username}  ${folder}
 
   # Verify that ${admin_username}  is connected to the cluster

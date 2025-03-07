@@ -15,18 +15,18 @@ ${ADMIN_GROUPS_SECTION}=    //div[@data-testid="data-science-administrator-group
 ${ADMIN_GROUPS_LIST}=    ${ADMIN_GROUPS_SECTION}//div[@role="group" and @aria-label="Current selections"]
 ${USER_GROUPS_SECTION}=    //div[@data-testid="data-science-user-groups"]
 ${USER_GROUPS_LIST}=    ${USER_GROUPS_SECTION}//div[@role="group" and @aria-label="Current selections"]
-${SAVE_BUTTON}=    //button[@data-testid="save-new-button"]
+${SAVE_BUTTON}=    //button[contains(., "Save changes")]
 
 *** Keywords ***
 Add OpenShift Groups To Data Science Administrators
     [Documentation]  Add OpenShift Groups to Data Science administrators From RHODS Dashboard
     [Arguments]     @{admin_groups}
-    Click Button   ${ADMIN_GROUPS_SECTION}//button[@aria-label="Options menu"]
+    Click Button   ${ADMIN_GROUPS_SECTION}//button[@aria-label="Select the OpenShift groups that contain all Data Science administrators."]
     FOR    ${group}    IN    @{admin_groups}
         ${present}=    Run Keyword And Return Status    Element Should Be Visible
-        ...    ${ADMIN_GROUPS_LIST}//*[text()="${group}"]
+        ...    ${ADMIN_GROUPS_SECTION}//div[@data-testid="group-setting-select"]//ul//*[text()="${group}"]
         IF    not ${present}
-            Click Element    ${ADMIN_GROUPS_SECTION}//*[text()="${group}"]
+            Click Element       //li[@data-testid="select-multi-typeahead-${group}"]/button
         END
     END
     Press Keys    None    ESC
@@ -34,12 +34,12 @@ Add OpenShift Groups To Data Science Administrators
 Add OpenShift Groups To Data Science User Groups
     [Documentation]  Add OpenShift Groups to Data Science User From RHODS Dashboard
     [Arguments]     @{user_groups}
-    Click Button   ${USER_GROUPS_SECTION}//button[@aria-label="Options menu"]
+    Click Button   ${USER_GROUPS_SECTION}//button[@aria-label="Select the OpenShift groups that contain all Data Science users."]
     FOR    ${group}    IN    @{user_groups}
         ${present}=    Run Keyword And Return Status    Element Should Be Visible
-        ...    ${USER_GROUPS_LIST}//*[text()="${group}"]
+        ...      ${USER_GROUPS_SECTION}//div[@data-testid="group-setting-select"]//ul//*[text()="${group}"]
         IF    not ${present}
-            Click Element    ${USER_GROUPS_SECTION}//*[text()="${group}"]
+            Click Element       //li[@data-testid="select-multi-typeahead-${group}"]/button
         END
     END
     Press Keys    None    ESC
@@ -51,11 +51,11 @@ Launch Dashboard And Check User Management Option Is Available For The User
     Launch Dashboard    ocp_user_name=${username}  ocp_user_pw=${password}  ocp_user_auth_type=${auth_type}
     ...    dashboard_url=${ODH_DASHBOARD_URL}  browser=${BROWSER.NAME}  browser_options=${BROWSER.OPTIONS}
     ${authorization_required}=  Is Service Account Authorization Required
-    IF    ${authorization_required}    Authorize jupyterhub service account
+    IF    ${authorization_required}    Authorize JupyterLab Service Account
     IF    ${settings_should_be}
         # Wait up to 2 minutes as a workaround for bug RHOAIENG-11116
         Menu.Navigate To Page    Settings    User management    timeout=2m
-        Wait Until Element Is Visible    //button[@aria-label="Options menu"]    timeout=10s
+        Wait Until Element Is Visible    //button[@aria-label="Select the OpenShift groups that contain all Data Science administrators."]    timeout=10s
     ELSE
         Verify Cluster Settings Is Not Available
     END
@@ -86,15 +86,15 @@ Save Changes In User Management Setting
     [Documentation]  Save User Management Settings In Dashboard
     [Arguments]    ${timeout}=3s
     Press Keys    None    ESC
+    Scroll Element Into View    ${SAVE_BUTTON}
     ${button_enabled}=    Run Keyword And Return Status
     ...    Wait Until Element Is Enabled   ${SAVE_BUTTON}
     IF    ${button_enabled}
         Click Button    ${SAVE_BUTTON}
-        Sleep    ${timeout}    reason=Wait for Dashboard to apply the updated configuration...
     END
 
 AdminGroups In OdhDashboardConfig CRD Should Be
-    [Documentation]  Verify Expect Changes Are Present In CRD
+    [Documentation]  Verify OdhDashboardConfig Admin Groups include '${UIadminGroupsList}'
     [Arguments]  @{UIadminGroupsList}
     ${dashnoardConfig}   Oc Get   kind=OdhDashboardConfig   namespace=${APPLICATIONS_NAMESPACE}  field_selector=metadata.name=odh-dashboard-config
     ${adminGroups}  Set Variable  ${dashnoardConfig[0]["spec"]["groupsConfig"]["adminGroups"]}
@@ -102,12 +102,12 @@ AdminGroups In OdhDashboardConfig CRD Should Be
     Lists Should Be Equal    ${UIadminGroupsList}  ${adminGroupsList}    ignore_order=True
 
 AllowedGroups In OdhDashboardConfig CRD Should Be
-    [Documentation]  Verify Expect Changes Are Present In CRD
+    [Documentation]  Verify OdhDashboardConfig Allowed Groups include '${UIallowedGroupList}'
     [Arguments]   @{UIallowedGroupList}
     ${dashnoardConfig}   Oc Get   kind=OdhDashboardConfig   namespace=${APPLICATIONS_NAMESPACE}  field_selector=metadata.name=odh-dashboard-config
     ${allowedGroups}  Set Variable  ${dashnoardConfig[0]["spec"]["groupsConfig"]["allowedGroups"]}
     @{allowedGroupsList}  Split String  ${allowedGroups}  ,
-    Lists Should Be Equal    ${UIadminGroupsList}  ${adminGroupsList}    ignore_order=True
+    Lists Should Be Equal    ${UIallowedGroupList}  ${allowedGroupsList}    ignore_order=True
 
 Clear User Management Settings
     [Documentation]  Clear all groups from User Management Settings
@@ -119,6 +119,7 @@ Clear User Management Settings
 Set Pod Toleration Via UI
     [Documentation]    Sets toleration using admin UI
     [Arguments]    ${toleration}
+    Scroll Element Into View    ${TOLERATION_CHECKBOX}
     Wait Until Page Contains Element    xpath:${TOLERATION_CHECKBOX}
     Sleep  2s
     ${selected} =    Run Keyword And Return Status    Checkbox Should Be Selected    xpath:${TOLERATION_CHECKBOX}
@@ -141,17 +142,7 @@ Disable Pod Toleration Via UI
 Save Changes In Cluster Settings
     [Documentation]    Clicks on the "Save changes" button in Cluster settings and
     ...    waits until "Cluster settings changes saved" is shown
-    Scroll Element Into View   xpath://button[.="Save changes"]
-    Wait Until Page Contains Element    xpath://button[.="Save changes"][@aria-disabled="false"]    timeout=15s
-    Click Button    Save changes
-    ${clicked}=    Run Keyword And Return Status
-    ...    Wait Until Page Contains Element    xpath://button[.="Save changes"][@aria-disabled="true"]
-    IF    ${clicked} == ${FALSE}
-        Capture Page Screenshot
-        Click Button    Save changes
-    END
-    Wait Until Keyword Succeeds    30    1
-    ...    Wait Until Page Contains    Cluster settings changes saved
+    Save Changes In User Management Setting
     # New setting applies after a few seconds, empirically >15s.
     # Sleep here to make sure it is applied.
     Sleep  30s

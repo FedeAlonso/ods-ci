@@ -31,9 +31,9 @@ Verify Workload Metrics Home page Contents
     [Tags]    RHOAIENG-4837
     ...       Sanity    DistributedWorkloads    Training    WorkloadsOrchestration
     Open Distributed Workload Metrics Home Page
+    Wait For Dashboard Page Title   Distributed Workload Metrics
     Wait Until Element Is Visible    ${DISTRIBUITED_WORKLOAD_METRICS_TEXT_XP}   timeout=20
     Wait Until Element Is Visible    ${PROJECT_METRICS_TAB_XP}   timeout=20
-    Page Should Contain Element     ${DISTRIBUITED_WORKLOAD_METRICS_TITLE_XP}
     Page Should Contain Element     ${DISTRIBUITED_WORKLOAD_METRICS_TEXT_XP}
     Page Should Contain Element     ${PROJECT_XP}
     Page Should Contain Element     ${PROJECT_METRICS_TAB_XP}
@@ -48,6 +48,7 @@ Verify Project Metrics Default Page contents
     [Documentation]    Verifiy Project Metrics default Page contents
     Open Distributed Workload Metrics Home Page
     Select Distributed Workload Project By Name    ${PRJ_TITLE}
+    Wait Until Element Is Visible  ${WORKLOADS_STATUS_XP}    timeout=20
     Check Project Metrics Default Page Contents    ${PRJ_TITLE}
 
 Verify Distributed Workload status Default Page contents
@@ -56,7 +57,6 @@ Verify Distributed Workload status Default Page contents
     [Documentation]    Verifiy distributed workload status page default contents
     Open Distributed Workload Metrics Home Page
     Select Distributed Workload Project By Name    ${PRJ_TITLE}
-    Wait Until Element Is Visible    xpath=//div[text()="Distributed workload resource metrics"]   timeout=20
     Check Distributed Workload Status Page Contents
 
 Verify That Not Admin Users Can Access Distributed workload metrics default page contents
@@ -76,8 +76,8 @@ Verify That Not Admin Users Can Access Distributed workload metrics default page
     Setup Kueue Resources    ${PRJ_TITLE_NONADMIN}    cluster-queue-user    resource-flavor-user    local-queue-user
     Click Link    Distributed Workload Metrics
     Select Distributed Workload Project By Name    ${PRJ_TITLE_NONADMIN}
-    Check Project Metrics Default Page Contents    ${PRJ_TITLE_NONADMIN}
     Check Distributed Workload Status Page Contents
+    Check Project Metrics Default Page Contents    ${PRJ_TITLE_NONADMIN}
     [Teardown]    Run Keywords
     ...    Cleanup Kueue Resources    ${PRJ_TITLE_NONADMIN}    cluster-queue-user    resource-flavor-user    local-queue-user
     ...    AND
@@ -96,6 +96,7 @@ Verify The Workload Metrics By Submitting Kueue Batch Workload
     Submit Kueue Workload    ${LOCAL_QUEUE_NAME}    ${PRJ_TITLE}    ${CPU_REQUESTED}    ${MEMORY_REQUESTED}    ${JOB_NAME_QUEUE}
     Select Distributed Workload Project By Name    ${PRJ_TITLE}
     Select Refresh Interval    15 seconds
+    Click Button    ${PROJECT_METRICS_TAB_XP}
     Wait Until Element Is Visible    ${DISTRIBUITED_WORKLOAD_RESOURCE_METRICS_TITLE_XP}    timeout=20
     Wait For Job With Status    ${JOB_NAME_QUEUE}    Running    60
 
@@ -132,6 +133,7 @@ Verify The Workload Metrics By Submitting Kueue Batch Workload
     Wait Until Element Is Visible    xpath=//*[@data-testid="dw-workload-resource-metrics"]//*[text()="No distributed workloads in the selected project are currently consuming resources."]    timeout=60
     Page Should Not Contain    ${JOB_NAME_QUEUE}
     Page Should Not Contain    Succeeded
+    Click Button    ${WORKLOAD_STATUS_TAB_XP}
     Check Distributed Workload Status Page Contents
     [Teardown]    Run Process     oc delete Job ${JOB_NAME_QUEUE} -n ${PRJ_TITLE}    shell=true
 
@@ -143,9 +145,12 @@ Verify The Workload Metrics By Submitting Ray Workload
     Open Distributed Workload Metrics Home Page
     Select Distributed Workload Project By Name    ${PRJ_TITLE}
     Select Refresh Interval    15 seconds
+    # verifying workload metrics in Dark mode
+    Click Button    xpath=//button[@aria-label="dark theme"]
+    Click Button    ${PROJECT_METRICS_TAB_XP}
     Wait Until Element Is Visible    ${DISTRIBUITED_WORKLOAD_RESOURCE_METRICS_TITLE_XP}    timeout=20
     Wait For Job With Status    ${RAY_CLUSTER_NAME}    Admitted    30
-    Wait For Job With Status    ${RAY_CLUSTER_NAME}    Running    180
+    Wait For Job With Status    ${RAY_CLUSTER_NAME}    Running    300
 
     ${cpu_requested} =   Get CPU Requested    ${PRJ_TITLE}    ${LOCAL_QUEUE_NAME}
     ${memory_requested} =   Get Memory Requested    ${PRJ_TITLE}    ${LOCAL_QUEUE_NAME}   RayCluster
@@ -174,6 +179,7 @@ Verify Requested resources When Multiple Local Queue Exists
     Open Distributed Workload Metrics Home Page
     Select Distributed Workload Project By Name    ${PRJ_TITLE}
     Select Refresh Interval    15 seconds
+    Click Button    ${PROJECT_METRICS_TAB_XP}
     Wait Until Element Is Visible    ${DISTRIBUITED_WORKLOAD_RESOURCE_METRICS_TITLE_XP}    timeout=20
     Wait For Job With Status    ${JOB_NAME_QUEUE}    Running    60
     Wait For Job With Status   ${MULTIPLE_JOB_NAME}    Running    60
@@ -190,20 +196,41 @@ Verify Requested resources When Multiple Local Queue Exists
     Wait Until Element Is Visible    xpath=//*[@id="topResourceConsumingCPU-ChartLabel-title"]    timeout=180
     Wait Until Element Is Visible    xpath=//*[@id="topResourceConsumingCPU-ChartLegend-ChartLabel-0"]   timeout=180
     ${cpu_usage} =    Get Current CPU Usage    ${PRJ_TITLE}    Job
-    ${cpu_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v5-chart-donut--label--title--Fill')]])[1]
+    ${cpu_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v6-chart-donut--label--title--Fill')]])[1]
     Check Resource Consuming Usage    ${cpu_usage}    ${cpu_consuming}    CPU
 
     Wait Until Element Is Visible    xpath=//*[@id="topResourceConsumingMemory-ChartLabel-title"]    timeout=180
     Wait Until Element Is Visible    xpath=//*[@id="topResourceConsumingMemory-ChartLegend-ChartLabel-0"]    timeout=180
     ${memory_usage} =    Get Current Memory Usage    ${PRJ_TITLE}    Job
-    ${memory_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v5-chart-donut--label--title--Fill')]])[2]
+    ${memory_consuming} =    Get Text    xpath:(//*[@style[contains(., 'var(--pf-v6-chart-donut--label--title--Fill')]])[2]
     Check Resource Consuming Usage    ${memory_usage}    ${memory_consuming}    Memory
 
     Wait For Job With Status    ${JOB_NAME_QUEUE}    Succeeded    180
     Wait For Job With Status   ${MULTIPLE_JOB_NAME}    Succeeded    180
 
-    [Teardown]    Run Process    oc delete LocalQueue ${MULTIPLE_LOCAL_QUEUE} -n ${PRJ_TITLE}
+    [Teardown]    Run Process    oc delete Job ${JOB_NAME_QUEUE} -n ${PRJ_TITLE} && oc delete Job ${MULTIPLE_JOB_NAME} -n ${PRJ_TITLE} && oc delete LocalQueue ${MULTIPLE_LOCAL_QUEUE} -n ${PRJ_TITLE}
     ...    shell=true
+
+Verify CPU And Memory Resource Usage Exceeds Warning Threshold
+    [Documentation]    Verify that CPU and memory resource usage surpass the warning threshold when the requested resources exceed 150% of the shared quota.
+    [Tags]    RHOAIENG-16160
+    ${WARNING_THRESHOLD}    Set Variable    Warning threshold (over 150%)
+    ${MEMORY_REQUESTING}    Set Variable    36864
+    ${ADD_ANNOTATION}    Set Variable    true
+    ${PARALLELISM}    Set Variable    2
+    Submit Kueue Workload    ${LOCAL_QUEUE_NAME}    ${PRJ_TITLE}    ${CPU_SHARED_QUOTA}    ${MEMORY_REQUESTING}    ${JOB_NAME_QUEUE}    ${ADD_ANNOTATION}    ${PARALLELISM}
+    Open Distributed Workload Metrics Home Page
+    Select Distributed Workload Project By Name    ${PRJ_TITLE}
+    Wait Until Element Is Visible  ${WORKLOADS_STATUS_XP}    timeout=20
+    Click Button    ${PROJECT_METRICS_TAB_XP}
+    Select Refresh Interval    15 seconds
+    Wait For Job With Status    ${JOB_NAME_QUEUE}    Admitted    180
+    Wait Until Element Is Visible    xpath=${CPU_WARNING_XP}   timeout=120
+    Wait Until Element Is Visible    xpath=${MEMORY_WARNING_XP}    timeout=120
+    Check Expected String Equals    ${CPU_WARNING_XP}    ${WARNING_THRESHOLD}
+    Check Expected String Equals    ${MEMORY_WARNING_XP}    ${WARNING_THRESHOLD}
+    Check Warning Threshold Chart
+    [Teardown]    Run Process     oc delete Job ${JOB_NAME_QUEUE} -n ${PRJ_TITLE}    shell=true
 
 *** Keywords ***
 Project Suite Setup

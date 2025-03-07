@@ -15,8 +15,7 @@ ${ISTIO_SYSTEM_NS}=       istio-system
 
 *** Keywords ***
 Uninstalling RHODS Operator
-  ${is_operator_installed} =  Is RHODS Installed
-  IF  ${is_operator_installed}  Run Keywords
+  Run Keywords
   ...  Log  Uninstalling RHODS operator in ${cluster_type}  console=yes  AND
   ...  Uninstall RHODS
 
@@ -37,7 +36,7 @@ Uninstall RHODS In OSD
 
 Uninstall RHODS In Self Managed Cluster
   [Documentation]  Uninstall rhods from self-managed cluster
-  IF  "${INSTALL_TYPE}" == "CLi"
+  IF  "${INSTALL_TYPE}" == "Cli"
       Uninstall RHODS In Self Managed Cluster Using CLI
   ELSE IF  "${INSTALL_TYPE}" == "OperatorHub"
       Uninstall RHODS In Self Managed Cluster For Operatorhub
